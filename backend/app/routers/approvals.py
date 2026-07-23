@@ -10,7 +10,7 @@ from app.models.settings import KEY_REGION_ID
 from app.schemas import ApprovalBatchResult, ApproveRequest, DeletionDecision, RejectRequest
 from app.schemas.approval import PendingRequestOut
 from app.services import approval as approval_service
-from app.services import aliyun_vpc
+from app.services import aliyun_dns, aliyun_vpc
 from app.services.settings_service import get_aliyun_config, get_setting
 
 router = APIRouter(
@@ -71,6 +71,12 @@ def fetch_security_groups(vpc_id: str, db: Session = Depends(get_db)):
     return _call_aliyun(lambda: aliyun_vpc.list_security_groups(get_aliyun_config(db), vpc_id))
 
 
+@router.get("/network/domains")
+def fetch_domains(db: Session = Depends(get_db)):
+    """Public zones hosted on Alibaba Cloud DNS for the approval cascade."""
+    return _call_aliyun(lambda: aliyun_dns.list_domains(get_aliyun_config(db)))
+
+
 def _call_aliyun(fn):
     try:
         return fn()
@@ -95,6 +101,7 @@ def approve(
             vpc_id=payload.vpc_id,
             vswitch_id=payload.vswitch_id,
             security_group_id=payload.security_group_id,
+            domain_name=payload.domain_name,
             admin=admin,
         )
     except ValueError as exc:

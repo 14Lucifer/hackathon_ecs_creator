@@ -3,11 +3,11 @@ schema_version: 1
 locale: en-US
 branch: main
 nodes_managed: true
-exported_at: "2026-07-22T23:02:25Z"
+exported_at: "2026-07-23T15:51:07Z"
 modules:
     "":
-        dir_name: ECS Resource Request & Approval System
-        title: ECS Resource Request & Approval System
+        dir_name: ECS Resource Request Platform (Frontend + Backend)
+        title: ECS Resource Request Platform (Frontend + Backend)
         scope:
             - README.md
             - .gitignore
@@ -48,8 +48,7 @@ modules:
         source_files: []
         children: []
         depends_on: []
-        related_to:
-            - path: backend/requests_approvals
+        related_to: []
     backend/auth_users:
         dir_name: Authentication & User Management API
         title: Authentication & User Management API
@@ -60,8 +59,7 @@ modules:
         source_files: []
         children: []
         depends_on: []
-        related_to:
-            - path: backend/models
+        related_to: []
     backend/core_app:
         dir_name: FastAPI Application Bootstrap & Runtime Configuration
         title: FastAPI Application Bootstrap & Runtime Configuration
@@ -72,8 +70,7 @@ modules:
         source_files: []
         children: []
         depends_on: []
-        related_to:
-            - path: frontend/app_shell
+        related_to: []
     backend/migrations:
         dir_name: Database Schema Migrations (Alembic)
         title: Database Schema Migrations (Alembic)
@@ -92,11 +89,7 @@ modules:
         source_files: []
         children: []
         depends_on: []
-        related_to:
-            - path: backend/auth_users
-            - path: backend/requests_approvals
-            - path: backend/settings_audit
-            - path: backend/templates
+        related_to: []
     backend/requests_approvals:
         dir_name: Resource Request & Approval Workflow
         title: Resource Request & Approval Workflow
@@ -107,11 +100,7 @@ modules:
         source_files: []
         children: []
         depends_on: []
-        related_to:
-            - path: backend/aliyun_services
-            - path: backend/models
-            - path: backend/schemas
-            - path: frontend/admin_pages
+        related_to: []
     backend/schemas:
         dir_name: Pydantic Request_Response Schemas
         title: Pydantic Request/Response Schemas
@@ -120,8 +109,7 @@ modules:
         source_files: []
         children: []
         depends_on: []
-        related_to:
-            - path: backend/requests_approvals
+        related_to: []
     backend/settings_audit:
         dir_name: Admin Settings & Audit Log API
         title: Admin Settings & Audit Log API
@@ -132,9 +120,7 @@ modules:
         source_files: []
         children: []
         depends_on: []
-        related_to:
-            - path: backend/models
-            - path: frontend/admin_pages
+        related_to: []
     backend/templates:
         dir_name: ECS Template Management (Admin CRUD + User Listing)
         title: ECS Template Management (Admin CRUD + User Listing)
@@ -145,8 +131,7 @@ modules:
         source_files: []
         children: []
         depends_on: []
-        related_to:
-            - path: backend/models
+        related_to: []
     frontend:
         dir_name: ECS Request System Frontend (Vite + React SPA)
         title: ECS Request System Frontend (Vite + React SPA)
@@ -159,19 +144,17 @@ modules:
         depends_on: []
         related_to: []
     frontend/admin_pages:
-        dir_name: Admin Portal Pages (ECS Request System)
-        title: Admin Portal Pages (ECS Request System)
+        dir_name: Admin Portal Pages (ECS Request Management)
+        title: Admin Portal Pages (ECS Request Management)
         scope:
             - frontend/src/pages/admin/
         source_files: []
         children: []
         depends_on: []
-        related_to:
-            - path: backend/requests_approvals
-            - path: backend/settings_audit
+        related_to: []
     frontend/app_shell:
-        dir_name: Application Shell & Shared UI
-        title: Application Shell & Shared UI
+        dir_name: Application Bootstrap, Auth Routing & Shared UI Layer
+        title: Application Bootstrap, Auth Routing & Shared UI Layer
         scope:
             - frontend/src/App.jsx
             - frontend/src/main.jsx
@@ -180,5 +163,4 @@ modules:
         source_files: []
         children: []
         depends_on: []
-        related_to:
-            - path: backend/core_app
+        related_to: []

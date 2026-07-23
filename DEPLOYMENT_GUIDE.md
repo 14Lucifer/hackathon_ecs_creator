@@ -20,7 +20,7 @@ Compose, plus local development setup.
                     └──────────────┬──────────────┘     └──────────────────┘
                                    │
                                    ▼
-                      Alibaba Cloud APIs (ECS / VPC)
+              Alibaba Cloud APIs (ECS / VPC / DNS-Alidns)
 ```
 
 Compose services:
@@ -42,10 +42,15 @@ only builds static files.
 - Docker Engine 20+ and Docker Compose v2 (`docker compose version`)
 - Port **80** free on the host
 - Outbound internet access from the backend container to Alibaba Cloud API
-  endpoints (`ecs.<region>.aliyuncs.com`, `vpc.<region>.aliyuncs.com`)
+  endpoints (`ecs.<region>.aliyuncs.com`, `vpc.<region>.aliyuncs.com`,
+  `alidns.aliyuncs.com`)
 - An Alibaba Cloud account with a RAM AccessKey that can call
-  `RunInstances`, `DescribeInstances`, `DeleteInstance`, `DescribeVpcs`,
-  `DescribeVSwitches`, `DescribeSecurityGroups`
+  - ECS: `RunInstances`, `DescribeInstances`, `DeleteInstance`, `DescribeSecurityGroups`
+  - VPC: `DescribeVpcs`, `DescribeVSwitches`
+  - DNS (Alidns): `DescribeDomains`, `AddDomainRecord`, `DeleteDomainRecord`
+- At least one **public zone hosted on Alibaba Cloud DNS** (the system creates
+  per-instance A records `<instance-name>.<domain>` in an existing zone; it
+  never creates or manages the zone itself)
 
 ---
 

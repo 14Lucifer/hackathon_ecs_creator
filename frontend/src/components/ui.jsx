@@ -18,6 +18,7 @@ const BADGE_STYLES = {
   rejected: { chip: 'bg-red-50 text-red-700 ring-red-600/20', dot: 'bg-red-500' },
   delete_pending: { chip: 'bg-orange-50 text-orange-700 ring-orange-600/20', dot: 'bg-orange-500' },
   deleted: { chip: 'bg-ink-100 text-ink-500 ring-ink-500/20', dot: 'bg-ink-500/50' },
+  removed_by_admin: { chip: 'bg-rose-50 text-rose-700 ring-rose-600/20', dot: 'bg-rose-500' },
   active: { chip: 'bg-blue-50 text-blue-700 ring-blue-600/20', dot: 'bg-blue-500' },
   inactive: { chip: 'bg-ink-50 text-ink-500 ring-ink-500/15', dot: 'bg-ink-200' },
 }
@@ -27,6 +28,7 @@ const BADGE_LABELS = {
   rejected: 'Rejected',
   delete_pending: 'Deletion Pending',
   deleted: 'Deleted',
+  removed_by_admin: 'Removed by Admin',
   active: 'Active',
   inactive: 'Inactive',
 }

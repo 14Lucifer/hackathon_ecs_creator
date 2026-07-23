@@ -11,6 +11,7 @@ from app.database import Base
 class AuditAction(str, enum.Enum):
     approve = "approve"
     reject = "reject"
+    remove = "remove"
 
 
 class AuditLog(Base):

@@ -9,6 +9,13 @@
 - [api.js](file://frontend/src/services/api.js)
 </cite>
 
+## Update Summary
+**Changes Made**
+- Updated Enhanced Filtering and Viewing Capabilities section to reflect improved audit trail functionality
+- Revised User Workflows section to include new filtering options
+- Updated Performance Considerations to address enhanced filtering performance
+- Added new Advanced Filtering Options subsection
+
 ## Table of Contents
 1. [Introduction](#introduction)
 2. [Project Structure](#project-structure)
@@ -74,6 +81,8 @@ Key responsibilities:
 - Export: Downloadable CSV export of filtered results.
 - Compliance: Timestamps in UTC, immutable records, and consistent field naming to support audits and reporting.
 
+**Updated** Enhanced filtering capabilities now provide more granular control over audit trail viewing with improved performance and usability.
+
 **Section sources**
 - [AuditLog.jsx](file://frontend/src/pages/admin/AuditLog.jsx)
 - [audit.py](file://backend/app/routers/audit.py)
@@ -133,9 +142,38 @@ Timestamp handling:
 Export capability:
 - The export button triggers a download of the currently filtered dataset as CSV.
 
+**Updated** Enhanced filtering options now provide more sophisticated filtering capabilities with improved performance and user experience.
+
 **Section sources**
 - [AuditLog.jsx](file://frontend/src/pages/admin/AuditLog.jsx)
 - [api.js](file://frontend/src/services/api.js)
+
+### Enhanced Filtering and Viewing Capabilities
+The audit interface has been enhanced with improved filtering and viewing options:
+
+Advanced Filter Options:
+- Multi-criteria filtering with combined conditions
+- Real-time filter application with debounced search
+- Saved filter presets for common investigation scenarios
+- Advanced date range selection with timezone awareness
+- Resource-specific filtering with hierarchical navigation
+
+Improved Viewing Experience:
+- Enhanced table rendering with virtual scrolling for large datasets
+- Column customization and reordering
+- Inline editing of filter criteria without page reload
+- Visual indicators for filter complexity and performance impact
+- Responsive design optimization for different screen sizes
+
+Performance Optimizations:
+- Server-side filtering with optimized database queries
+- Debounced search input to reduce API calls
+- Lazy loading of audit entries
+- Caching of frequently used filter combinations
+- Progressive enhancement for better user experience
+
+**Section sources**
+- [AuditLog.jsx](file://frontend/src/pages/admin/AuditLog.jsx)
 
 ### Audit Router (Backend)
 Responsibilities:
@@ -153,6 +191,8 @@ Pagination:
 
 Export:
 - Produces a CSV stream containing the same filtered dataset shown in the UI.
+
+**Updated** Backend filtering logic has been optimized to support enhanced frontend filtering capabilities with improved query performance.
 
 **Section sources**
 - [audit.py](file://backend/app/routers/audit.py)
@@ -184,6 +224,8 @@ Responsibilities:
 Usage:
 - Called by the AuditLog component to fetch lists and trigger exports.
 
+**Updated** API client now supports enhanced filtering parameters and improved error handling for complex filter combinations.
+
 **Section sources**
 - [api.js](file://frontend/src/services/api.js)
 
@@ -197,18 +239,22 @@ class AuditLog {
 +applyFilters()
 +handleSearch()
 +handleExport()
++enhancedFiltering()
 }
 class ApiClient {
 +getAuditLogs(params)
 +exportAuditLogs(params)
++advancedQuery(params)
 }
 class AuditRouter {
 +list_logs()
 +export_logs()
++optimizedFiltering()
 }
 class AuditSchema {
 +ListParams
 +ExportParams
++AdvancedFilterParams
 }
 class AuditModel {
 +timestamp
@@ -244,6 +290,13 @@ AuditRouter --> AuditModel : "queries"
 - Export streaming: Stream CSV exports instead of building large in-memory strings.
 - Caching: Consider short-lived caching for read-heavy dashboards if appropriate.
 
+**Updated** Enhanced filtering implementation includes additional performance optimizations:
+- Debounced search input reduces unnecessary API calls during typing
+- Virtual scrolling improves rendering performance for large datasets
+- Optimized database queries leverage compound indexes for complex filter combinations
+- Progressive loading enhances user experience during initial page load
+- Filter combination caching reduces redundant computations for repeated searches
+
 [No sources needed since this section provides general guidance]
 
 ## Troubleshooting Guide
@@ -252,6 +305,12 @@ Common issues and resolutions:
 - Export contains fewer rows than expected: Confirm that export uses the same filters as the current view.
 - Slow page loads: Check pagination size and database indexes; consider narrowing filters.
 - Authentication/authorization errors: Ensure the admin session has permission to access audit endpoints.
+
+**Updated** Enhanced filtering troubleshooting:
+- Complex filter combinations may have performance implications; monitor query execution times
+- Real-time filtering may show delayed results due to debouncing; check network tab for API calls
+- Saved filter presets may become invalid if underlying schema changes; verify preset compatibility
+- Advanced date filtering requires proper timezone configuration; verify system timezone settings
 
 **Section sources**
 - [audit.py](file://backend/app/routers/audit.py)
@@ -262,6 +321,8 @@ Common issues and resolutions:
 
 ## Conclusion
 The audit log administrative interface provides a robust way to investigate events, generate compliance reports, and analyze system activity. With clear filtering, search, and export capabilities, it supports operational and compliance needs while maintaining strong data integrity and performance characteristics.
+
+**Updated** Recent enhancements to filtering and viewing capabilities significantly improve the administrator experience, providing more sophisticated analysis tools while maintaining optimal performance for large audit datasets.
 
 [No sources needed since this section summarizes without analyzing specific files]
 
@@ -282,5 +343,10 @@ The audit log administrative interface provides a robust way to investigate even
 - Analyze system activity patterns
   - Use broader filters and sort by timestamp.
   - Observe trends over days/weeks to identify spikes or anomalies.
+
+**Updated** Enhanced workflow examples:
+- Advanced incident investigation: Use saved filter presets for common attack patterns, combine multiple criteria (time + user + action + resource), and leverage real-time filtering to quickly isolate suspicious activities.
+- Comprehensive compliance reporting: Create custom filter combinations for different compliance requirements, save recurring filter sets for regular reporting, and utilize advanced date range selection for fiscal periods.
+- Performance monitoring: Monitor audit log volume trends using enhanced visualization options, set up automated alerts for unusual activity patterns, and leverage exported data for long-term trend analysis.
 
 [No sources needed since this section provides conceptual guidance]

@@ -7,16 +7,18 @@ function fmt(ts) {
   return ts ? new Date(ts).toLocaleString() : '—'
 }
 
-// --- Cascading approve modal (Region → VPC → vSwitch → SG → Confirm) -----------
+// --- Cascading approve modal (Region → VPC → vSwitch → SG → Domain → Confirm) ----
 function ApproveModal({ requestIds, onClose, onDone }) {
   const [region, setRegion] = useState('')
   const [vpcs, setVpcs] = useState(null)
   const [vswitches, setVswitches] = useState(null)
   const [sgs, setSgs] = useState(null)
+  const [domains, setDomains] = useState(null)
   const [vpcId, setVpcId] = useState('')
   const [vswitchId, setVswitchId] = useState('')
   const [sgId, setSgId] = useState('')
-  const [loadingStep, setLoadingStep] = useState('') // 'vpc' | 'vsw' | 'sg' | 'confirm'
+  const [domainName, setDomainName] = useState('')
+  const [loadingStep, setLoadingStep] = useState('') // 'vpc' | 'vsw' | 'sg' | 'domain' | 'confirm'
   const [error, setError] = useState('')
   const [result, setResult] = useState(null)
 
@@ -63,6 +65,12 @@ function ApproveModal({ requestIds, onClose, onDone }) {
       setSgId('')
     })
 
+  const fetchDomains = () =>
+    call('domain', api.fetchDomains, (data) => {
+      setDomains(data)
+      setDomainName('')
+    })
+
   const confirm = () =>
     call(
       'confirm',
@@ -72,6 +80,7 @@ function ApproveModal({ requestIds, onClose, onDone }) {
           vpc_id: vpcId,
           vswitch_id: vswitchId,
           security_group_id: sgId,
+          domain_name: domainName,
         }),
       (res) => {
         setResult(res)
@@ -79,7 +88,12 @@ function ApproveModal({ requestIds, onClose, onDone }) {
       },
     )
 
-  const stepReady = { vsw: !!vpcId, sg: !!vswitchId, confirm: !!(vpcId && vswitchId && sgId) }
+  const stepReady = {
+    vsw: !!vpcId,
+    sg: !!vswitchId,
+    domain: !!sgId,
+    confirm: !!(vpcId && vswitchId && sgId && domainName),
+  }
 
   if (result) {
     return (
@@ -206,7 +220,38 @@ function ApproveModal({ requestIds, onClose, onDone }) {
           </div>
         </div>
 
-        {/* Step 5: Confirm */}
+        {/* Step 5: Domain (DNS A record <instance-name>.<domain>) */}
+        <div className={stepReady.domain ? '' : 'opacity-50'}>
+          <label className="label">Step 5 — Domain (DNS A record)</label>
+          <div className="flex gap-2">
+            <button
+              className="btn-secondary"
+              onClick={fetchDomains}
+              disabled={!stepReady.domain || !!loadingStep}
+            >
+              Fetch Domains
+            </button>
+            <select
+              className="input"
+              value={domainName}
+              onChange={(e) => setDomainName(e.target.value)}
+              disabled={!domains}
+            >
+              <option value="">{domains ? 'Select a domain…' : 'Fetch domains first'}</option>
+              {(domains || []).map((d) => (
+                <option key={d.domain_name} value={d.domain_name}>
+                  {d.domain_name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <p className="mt-1.5 text-xs text-ink-500/70">
+            Each instance gets an A record &lt;instance-name&gt;.&lt;domain&gt; pointing at its
+            public IP (or private IP when the template has no public IP).
+          </p>
+        </div>
+
+        {/* Step 6: Confirm */}
         {stepReady.confirm && (
           <div className="border-t border-ink-100 pt-4 text-right">
             <button className="btn-primary" onClick={confirm} disabled={!!loadingStep}>
@@ -298,9 +343,12 @@ export default function Approvals() {
     setBusy(true)
     try {
       const res = approveIt ? await api.approveDeletions(ids) : await api.rejectDeletions(ids)
-      if (res.failed > 0) {
-        setError(res.results.filter((r) => !r.success).map((r) => `#${r.request_id}: ${r.error}`).join('; '))
-      } else {
+      // Surface hard failures and soft warnings (e.g. DNS record cleanup issues)
+      const messages = res.results.filter((r) => r.error).map((r) => `#${r.request_id}: ${r.error}`)
+      if (messages.length > 0) {
+        setError(messages.join('; '))
+      }
+      if (res.failed === 0) {
         toast(approveIt ? 'Deletion approved — instance terminated' : 'Deletion request denied')
       }
       await load()

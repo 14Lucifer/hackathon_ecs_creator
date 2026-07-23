@@ -1,0 +1,10 @@
+schema_version: 1
+module_path: backend/core_app
+title: FastAPI Application Bootstrap & Runtime Configuration
+scope:
+    - backend/app/config.py
+    - backend/app/database.py
+    - backend/app/main.py
+source_files: []
+depends_on: []
+related_to: []

@@ -1,0 +1,1 @@
+`cp .env.example .env && docker compose up -d --build` provisions PostgreSQL, runs Alembic migrations inside the backend container, builds the Vite frontend, and starts nginx; default admin credentials are `admin@system.local` / `admin123`.

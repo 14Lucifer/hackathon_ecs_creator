@@ -1,0 +1,2 @@
+- Cross-service contract is REST over HTTP on the `/api` path prefix, consumed by the frontend's `services/api.js` client and proxied by nginx's `/api` rule.
+- Per-environment secrets (DB_USER, DB_PASSWORD, SECRET_KEY, ENCRYPTION_KEY, Alibaba Cloud AccessKey) flow in via `.env` loaded by `docker-compose.yml env_file` and are never hard-coded in either child.

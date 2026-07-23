@@ -18,6 +18,7 @@ class RequestStatus(str, enum.Enum):
     rejected = "rejected"
     delete_pending = "delete_pending"
     deleted = "deleted"
+    removed_by_admin = "removed_by_admin"
 
 
 class ResourceRequest(Base):
@@ -29,6 +30,7 @@ class ResourceRequest(Base):
     status: Mapped[RequestStatus] = mapped_column(
         Enum(RequestStatus, name="request_status"), nullable=False, default=RequestStatus.pending
     )
+    # Admin remark shown to the user: rejection reason or removal remark
     reject_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     instance_id: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     instance_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
@@ -39,6 +41,10 @@ class ResourceRequest(Base):
     vpc_id: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     vswitch_id: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     security_group_id: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    # DNS A record (<instance-name>.<domain>) created at approval
+    domain_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    fqdn: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    dns_record_id: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     submitted_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, default=datetime.utcnow
     )

@@ -25,6 +25,7 @@ class RequestOut(BaseModel):
     instance_name: Optional[str] = None
     public_ip: Optional[str] = None
     private_ip: Optional[str] = None
+    fqdn: Optional[str] = None
     password: Optional[str] = None
     submitted_at: datetime
     resolved_at: Optional[datetime] = None
@@ -41,6 +42,7 @@ class ActiveResourceOut(BaseModel):
     instance_id: Optional[str] = None
     public_ip: Optional[str] = None
     private_ip: Optional[str] = None
+    fqdn: Optional[str] = None
     password: Optional[str] = None
     submitted_at: datetime
     resolved_at: Optional[datetime] = None

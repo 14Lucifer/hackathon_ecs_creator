@@ -14,6 +14,8 @@ router = APIRouter(prefix="/requests", tags=["requests"])
 
 _ACTIVE = [RequestStatus.pending, RequestStatus.approved, RequestStatus.delete_pending]
 _DETAIL_VISIBLE = (RequestStatus.approved, RequestStatus.delete_pending)
+# Statuses whose admin remark (rejection reason / removal remark) is user-visible
+_REMARK_VISIBLE = (RequestStatus.rejected, RequestStatus.removed_by_admin)
 
 
 def _to_out(req: ResourceRequest) -> RequestOut:
@@ -23,10 +25,11 @@ def _to_out(req: ResourceRequest) -> RequestOut:
         status=req.status.value,
         is_active=req.is_active,
         template=req.template,
-        reject_reason=req.reject_reason if req.status == RequestStatus.rejected else None,
+        reject_reason=req.reject_reason if req.status in _REMARK_VISIBLE else None,
         instance_name=req.instance_name if show_details else None,
         public_ip=req.public_ip if show_details else None,
         private_ip=req.private_ip if show_details else None,
+        fqdn=req.fqdn if show_details else None,
         password=crypto.decrypt(req.password) if (show_details and req.password) else None,
         submitted_at=req.submitted_at,
         resolved_at=req.resolved_at,

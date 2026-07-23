@@ -1,0 +1,10 @@
+schema_version: 1
+module_path: backend/templates
+title: ECS Template Management (Admin CRUD + User Listing)
+scope:
+    - backend/app/routers/templates.py
+    - backend/app/models/template.py
+    - backend/app/schemas/template.py
+source_files: []
+depends_on: []
+related_to: []

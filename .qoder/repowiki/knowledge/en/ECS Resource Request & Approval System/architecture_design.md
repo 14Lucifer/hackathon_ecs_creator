@@ -1,5 +1,0 @@
-The repository is a two-service application wired together by `docker-compose.yml` and a shared nginx reverse proxy:
-- `frontend/` (Vite + React) is built in a one-shot container whose output volume is mounted read-only into the `nginx:alpine` service on `/usr/share/nginx/html`, so nginx serves the static SPA.
-- `backend/` (FastAPI + SQLAlchemy/Alembic) runs as a long-lived service behind nginx; all browser requests to `/api/*` are proxied to it via `nginx/nginx.conf`, while root paths serve the SPA.
-- Both services share a `postgres:15-alpine` database (`ecs_request`) configured through `.env` (DB_USER, DB_PASSWORD, SECRET_KEY, ENCRYPTION_KEY).
-- The frontend's dev server proxies `/api` to `localhost:8000`; production traffic goes exclusively through nginx, which is the only externally exposed port (80).

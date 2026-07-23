@@ -1,0 +1,1 @@
+Top-level orchestration of a React SPA and FastAPI backend into a single Docker Compose stack served through nginx, with PostgreSQL as the shared data store.

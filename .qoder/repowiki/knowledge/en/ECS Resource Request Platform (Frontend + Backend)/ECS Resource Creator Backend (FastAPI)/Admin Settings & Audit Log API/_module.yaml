@@ -1,0 +1,10 @@
+schema_version: 1
+module_path: backend/settings_audit
+title: Admin Settings & Audit Log API
+scope:
+    - backend/app/routers/settings.py
+    - backend/app/routers/audit.py
+    - backend/app/services/settings_service.py
+source_files: []
+depends_on: []
+related_to: []

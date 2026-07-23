@@ -1,0 +1,1 @@
+React 18 with `react-router-dom` v6 (`BrowserRouter` + nested `<Route>`s), `lucide-react` for icons, Tailwind CSS for styling, and native `fetch` with `credentials: 'include'` for cookie-based server sessions.

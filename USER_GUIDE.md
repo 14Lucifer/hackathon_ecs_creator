@@ -46,11 +46,16 @@ the limit, you will see:
 | **Rejected** | Admin declined the request | The admin's rejection reason |
 | **Deletion Pending** | You requested deletion; awaiting admin decision | Details remain visible; still counts toward your limit |
 | **Deleted** | Instance terminated | Row remains in history as *Inactive* |
+| **Removed by Admin** | An admin removed the resource directly | Row remains in history as *Inactive*; the admin's remark (if any) appears in the Remark column |
 
 ### 2.3 Accessing an Approved Instance
 
 Approved requests show a credentials panel:
 
+- **Public Domain Name**: `<instance-name>.<domain>` (e.g. `luke-1.demo.com`) — a DNS
+  A record created at approval, pointing at the public IP (or the private IP when
+  the template has no public IP)
+- **Domain Access**: `root@<fqdn>` — the preferred connection string
 - **Public Access**: `root@<public-ip>` (only when the template includes a public IP)
 - **Private Access**: `root@<private-ip>`
 - **Password**: hidden by default — click the **eye icon** to reveal the
@@ -59,7 +64,7 @@ Approved requests show a credentials panel:
 Connect via SSH, for example:
 
 ```bash
-ssh root@<public-ip>
+ssh root@luke-1.demo.com     # or ssh root@<public-ip>
 ```
 
 ### 2.4 Requesting Deletion
@@ -75,10 +80,12 @@ ssh root@<public-ip>
 ### 2.5 Request History
 
 The **Request History** table lists every request you have ever submitted, with
-its status and an **Active / Inactive** tag:
+its status, an **Active / Inactive** tag, and a **Remark** column:
 
 - **Active** = pending, approved, or deletion pending
-- **Inactive** = deleted or rejected
+- **Inactive** = deleted, rejected, or removed by admin
+- **Remark** = the admin's rejection reason (for *Rejected*) or removal remark
+  (for *Removed by Admin*), when provided
 
 ---
 
@@ -102,16 +109,27 @@ requests, current selection).
      **Fetch vSwitches** (filtered by the chosen VPC).
    - **Step 4 — Security Group**: unlocked after a vSwitch is selected; click
      **Fetch Security Groups**.
-   - **Step 5 — Confirm Approve**: appears once all selections are made.
+   - **Step 5 — Domain**: unlocked after a security group is selected; click
+     **Fetch Domains** to list the public zones hosted on Alibaba Cloud DNS and
+     pick the zone for the instances' A records.
+   - **Step 6 — Confirm Approve**: appears once all selections are made.
 3. On confirm, the system calls the Alibaba Cloud `RunInstances` API for each
    request **sequentially**. Every instance gets:
    - Pay-As-You-Go billing, `root` user, an auto-generated 16-character password
-   - Instance name `<user-name>_<sequence>` (per-user counter starting at 1)
+   - Instance name `<user-name>-<sequence>` — the display name is lowercased
+     and spaces/punctuation become single hyphens (per-user counter starting
+     at 1, e.g. "Phyo Hein Pyae" → `phyo-hein-pyae-1`)
    - Public IP with Pay-By-Traffic / 20 Mbps bandwidth, if enabled in the template
+   - A DNS **A record** `<instance-name>.<domain>` (e.g. `luke-1.demo.com`)
+     pointing at the public IP — or the private IP when the template has no
+     public IP
 4. A result summary is shown, e.g. *"3 approved successfully, 2 failed"* with a
    per-request error message for each failure. **Partial success is preserved** —
    requests that succeeded stay approved even if later ones fail; failed
    requests remain pending and can be retried.
+5. If the DNS record cannot be created, the just-created instance is
+   **rolled back (terminated)** and the request stays pending, so an approved
+   request always has both a running instance and a valid domain name.
 
 **Rejecting resource requests**
 
@@ -122,8 +140,10 @@ and confirm. The reason is shown to the requesting user.
 
 The lower table lists resources whose owners asked for deletion:
 
-- **Approve Deletion** → calls `DeleteInstance` (force-stop) and marks the
-  request *Deleted*.
+- **Approve Deletion** → calls `DeleteInstance` (force-stop), deletes the
+  instance's DNS A record, and marks the request *Deleted*. If the record
+  cleanup fails, the deletion still completes and a warning tells you which
+  record to remove manually.
 - **Deny** → the request reverts to *Approved*; the instance keeps running.
 
 All Alibaba Cloud calls show a *"Calling Alibaba Cloud API..."* spinner; API
@@ -170,13 +190,22 @@ Templates referenced by active requests cannot be deleted.
 
 A live overview of every *approved* (running) instance: owner, template,
 instance name, and an expandable **Credential** cell (click **View**) showing
-public/private access strings and the password behind an eye-icon toggle.
+the public domain name, domain/IP access strings, and the password behind an
+eye-icon toggle.
+
+**Remove**: each row has a **Remove** action that terminates the instance
+(force-stop), deletes its DNS A record, and sets the request status to
+*Removed by Admin* on the user side — no user deletion request needed. The
+modal accepts an **optional remark** that the user sees in their Request
+History (e.g. "Removed during cost cleanup"). Removals are recorded in the
+Audit Log with the **Remove** action, and the freed slot no longer counts
+toward the user's 2-active limit.
 
 ### 3.5 Audit Log
 
-A read-only record of every approve/reject action: timestamp, action, affected
-user, template, acting admin, and rejection reason (if any). Sortable by
-timestamp and filterable by action type.
+A read-only record of every approve/reject/remove action: timestamp, action,
+affected user, template, acting admin, and remark (rejection reason or removal
+remark, if any). Sortable by timestamp and filterable by action type.
 
 ### 3.6 Settings
 
@@ -186,6 +215,11 @@ timestamp and filterable by action type.
 | Access Key ID | Stored **encrypted (AES-256)**; displayed as `****` once saved |
 | Access Key Secret | Stored **encrypted (AES-256)**; displayed as `****` once saved |
 | Region ID | Used globally for **all** Alibaba Cloud API calls (e.g. `cn-hangzhou`) |
+
+The same AccessKey is used for ECS, VPC **and DNS (Alidns)** calls, so it must
+also be allowed to manage the public zones used in approvals. The domain
+itself must already be hosted on Alibaba Cloud DNS — the system lists existing
+zones but never creates them.
 
 Leaving a `****` mask untouched keeps the stored secret; typing a new value
 replaces it.

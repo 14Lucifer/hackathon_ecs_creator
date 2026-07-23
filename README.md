@@ -2,7 +2,8 @@
 
 Web-based ECS instance request and approval system for Alibaba Cloud. Users submit
 resource requests based on admin-configured templates; admins approve or reject
-requests, which triggers actual ECS instance creation via Alibaba Cloud APIs.
+requests, which triggers actual ECS instance creation via Alibaba Cloud APIs and
+registers a DNS A record `<instance-name>.<domain>` on Alibaba Cloud DNS.
 
 ## Documentation
 
@@ -38,7 +39,9 @@ Then, in the admin portal:
 
 Users log in at the same URL, pick a template and submit a request (max 2 active
 per user). Admins approve via the cascading Region → VPC → vSwitch → Security Group
-modal, which calls `RunInstances`; deletion approvals call `DeleteInstance` (force).
+→ Domain modal, which calls `RunInstances` and creates a DNS A record
+`<instance-name>.<domain>`; deletion approvals call `DeleteInstance` (force) and
+remove the record.
 
 See the [User Guide](USER_GUIDE.md) for the full walkthrough of both portals, and
 the [Deployment Guide](DEPLOYMENT_GUIDE.md) for configuration details, operations

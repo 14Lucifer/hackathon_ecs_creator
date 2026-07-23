@@ -7,6 +7,9 @@ function fmt(ts) {
   return ts ? new Date(ts).toLocaleString() : '—'
 }
 
+// Map audit actions onto status badge styles
+const ACTION_BADGE = { approve: 'approved', reject: 'rejected', remove: 'removed_by_admin' }
+
 export default function AuditLog() {
   const [logs, setLogs] = useState([])
   const [action, setAction] = useState('')
@@ -29,6 +32,7 @@ export default function AuditLog() {
             <option value="">All actions</option>
             <option value="approve">Approve</option>
             <option value="reject">Reject</option>
+            <option value="remove">Remove</option>
           </select>
           <button
             className="btn-secondary"
@@ -51,7 +55,7 @@ export default function AuditLog() {
               <th className="th">User Email</th>
               <th className="th">Template</th>
               <th className="th">Admin</th>
-              <th className="th">Reject Reason</th>
+              <th className="th">Remark</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-ink-100">
@@ -60,7 +64,7 @@ export default function AuditLog() {
               <tr key={l.id} className="table-row">
                 <td className="td whitespace-nowrap tabular-nums">{fmt(l.created_at)}</td>
                 <td className="td">
-                  <Badge status={l.action === 'approve' ? 'approved' : 'rejected'} />
+                  <Badge status={ACTION_BADGE[l.action] || l.action} />
                 </td>
                 <td className="td font-medium text-ink-900">{l.user_name}</td>
                 <td className="td">{l.user_email}</td>

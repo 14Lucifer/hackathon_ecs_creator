@@ -18,6 +18,7 @@ class ApproveRequest(BaseModel):
     vpc_id: str = Field(min_length=1)
     vswitch_id: str = Field(min_length=1)
     security_group_id: str = Field(min_length=1)
+    domain_name: str = Field(min_length=1)
 
 
 class RejectRequest(BaseModel):

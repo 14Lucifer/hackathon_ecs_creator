@@ -73,6 +73,7 @@ export const api = {
     request(`/approvals/network/vswitches?vpc_id=${encodeURIComponent(vpcId)}`),
   fetchSecurityGroups: (vpcId) =>
     request(`/approvals/network/security-groups?vpc_id=${encodeURIComponent(vpcId)}`),
+  fetchDomains: () => request('/approvals/network/domains'),
   approve: (data) => request('/approvals/approve', { method: 'POST', body: data }),
   reject: (data) => request('/approvals/reject', { method: 'POST', body: data }),
   approveDeletions: (ids) =>
@@ -82,6 +83,8 @@ export const api = {
 
   // active resources / audit / settings (admin)
   activeResources: () => request('/active-resources'),
+  removeResource: (id, remark) =>
+    request(`/active-resources/${id}/remove`, { method: 'POST', body: { remark } }),
   auditLogs: (action, order) => {
     const params = new URLSearchParams()
     if (action) params.set('action', action)

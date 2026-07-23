@@ -1,1 +1,0 @@
-`cp .env.example .env && docker compose up -d --build` boots the full stack (PostgreSQL → backend with Alembic migrations → frontend build → nginx); default admin login is `admin@system.local` / `admin123`.

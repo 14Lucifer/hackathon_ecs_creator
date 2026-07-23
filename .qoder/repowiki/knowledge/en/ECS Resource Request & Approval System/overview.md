@@ -1,1 +1,0 @@
-End-to-end ECS instance request-and-approval platform that composes a React SPA, FastAPI backend, PostgreSQL, and nginx into a single Docker Compose deployment.

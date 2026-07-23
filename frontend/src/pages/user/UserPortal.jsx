@@ -46,6 +46,14 @@ function RequestCard({ req, onDeleteRequest, deleting }) {
       {(req.status === 'approved' || req.status === 'delete_pending') && (
         <div className="mt-3 space-y-1.5 rounded-lg border border-ink-100 bg-ink-50/60 px-3 py-2.5 text-[13px]">
           <div>
+            <span className="font-medium text-ink-500">Public Domain Name: </span>
+            <span className="mono">{req.fqdn || '—'}</span>
+          </div>
+          <div>
+            <span className="font-medium text-ink-500">Domain Access: </span>
+            <span className="mono font-semibold">{req.fqdn ? `root@${req.fqdn}` : '—'}</span>
+          </div>
+          <div>
             <span className="font-medium text-ink-500">Public Access: </span>
             <span className="mono">{req.public_ip ? `root@${req.public_ip}` : '—'}</span>
           </div>
@@ -211,10 +219,11 @@ export default function UserPortal() {
                 <th className="th">Submitted At</th>
                 <th className="th">Status</th>
                 <th className="th">Active</th>
+                <th className="th">Remark</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-ink-100">
-              {requests.length === 0 && <EmptyState text="No requests yet." colSpan={4} />}
+              {requests.length === 0 && <EmptyState text="No requests yet." colSpan={5} />}
               {requests.map((r) => (
                 <tr key={r.id} className="table-row">
                   <td className="td font-medium text-ink-900">{r.template.name}</td>
@@ -224,6 +233,15 @@ export default function UserPortal() {
                   </td>
                   <td className="td">
                     <Badge status={r.is_active ? 'active' : 'inactive'} />
+                  </td>
+                  <td className="td max-w-64">
+                    {r.reject_reason ? (
+                      <span className="text-ink-700" title={r.reject_reason}>
+                        {r.reject_reason}
+                      </span>
+                    ) : (
+                      '—'
+                    )}
                   </td>
                 </tr>
               ))}

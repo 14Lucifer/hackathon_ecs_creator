@@ -1,0 +1,12 @@
+schema_version: 1
+module_path: ""
+title: ECS Resource Request Platform (Frontend + Backend)
+scope:
+    - README.md
+    - .gitignore
+    - docker-compose.yml
+    - ecs-request-system-prompt.md
+    - .env.example
+source_files: []
+depends_on: []
+related_to: []
