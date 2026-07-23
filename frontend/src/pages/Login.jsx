@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Server } from 'lucide-react'
 import { useAuth } from '../App'
 import { api } from '../services/api'
 import { ErrorBanner, Spinner } from '../components/ui'
@@ -28,10 +29,21 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100 px-4">
-      <div className="card w-full max-w-sm p-8">
-        <h1 className="mb-1 text-xl font-bold text-gray-900">ECS Resource Request System</h1>
-        <p className="mb-6 text-sm text-gray-500">Sign in with your email and password</p>
+    <div className="flex min-h-screen items-center justify-center bg-ink-50 px-4">
+      {/* subtle top gradient accent */}
+      <div className="pointer-events-none fixed inset-x-0 top-0 h-64 bg-gradient-to-b from-ink-100/80 to-transparent" />
+      <div className="card relative w-full max-w-sm p-8 animate-slide-up">
+        <div className="mb-6 flex flex-col items-start gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-ink-900 text-white shadow-card">
+            <Server className="h-5 w-5" />
+          </span>
+          <div>
+            <h1 className="text-lg font-semibold tracking-tight text-ink-900">
+              ECS Resource Request System
+            </h1>
+            <p className="text-[13px] text-ink-500">Sign in with your email and password</p>
+          </div>
+        </div>
         <ErrorBanner message={error} onDismiss={() => setError('')} />
         <form onSubmit={submit} className="space-y-4">
           <div>
@@ -40,6 +52,7 @@ export default function Login() {
               id="email"
               type="email"
               className="input"
+              placeholder="you@company.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -52,12 +65,13 @@ export default function Login() {
               id="password"
               type="password"
               className="input"
+              placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
           </div>
-          <button type="submit" className="btn-primary w-full justify-center" disabled={loading}>
+          <button type="submit" className="btn-primary w-full" disabled={loading}>
             {loading ? <Spinner text="Signing in..." /> : 'Sign In'}
           </button>
         </form>

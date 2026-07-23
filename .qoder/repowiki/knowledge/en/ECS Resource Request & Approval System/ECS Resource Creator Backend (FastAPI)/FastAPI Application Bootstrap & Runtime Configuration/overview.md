@@ -1,0 +1,1 @@
+Bootstraps the FastAPI server, wires routers under /api, seeds the initial admin user, and provides shared SQLAlchemy engine/session plus environment-driven settings.

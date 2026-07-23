@@ -1,0 +1,7 @@
+Four cooperating entry/leaf files form the application root:
+- `main.jsx` is the ReactDOM bootstrap; it mounts `<BrowserRouter>` and `<ToastProvider>` around `<App>`.
+- `App.jsx` owns global auth state via an `AuthContext` (`useAuth` hook), calls `api.me()` on mount to hydrate the session, listens for a `session-expired` custom event, and declares all routes guarded by `user.role === 'admin' | 'user'`, redirecting unknown paths to `/login` or the role-appropriate home.
+- `services/api.js` is a thin fetch wrapper: every endpoint lives under `/api*`, uses `credentials: 'include'` for cookie sessions, dispatches `session-expired` on 401 (except login), normalises error bodies into an `ApiError` with `.status`, and exports one flat `api` object mirroring backend resource names (`templates`, `requests`, `users`, `approvals`, `active-resources`, `audit`, `settings`).
+- `components/ui.jsx` holds small presentational components (`Badge`, `Spinner`, `Modal`, `ErrorBanner`, `PasswordReveal`) plus a process-wide toast system implemented as a `ToastContext` + `useToast` hook, rendered by `ToastProvider` at the app root.
+
+Dependency direction is strictly inward: pages import from `App` (routing/auth), `ui`, and `api`; nothing in this module imports from `pages/`. The only cross-boundary signal between layers is the `session-expired` DOM event bridging `api.js` → `App.jsx`.

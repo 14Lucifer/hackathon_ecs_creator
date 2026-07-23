@@ -1,0 +1,5 @@
+Three independent leaf files with no shared base class:
+- `aliyun_vpc.py` owns client construction (`_vpc_client`, `_ecs_client`) using `alibabacloud_tea_openapi.models.Config` keyed by an `AliyunConfig` from `app.services.settings_service`; it exposes read-only listers (`list_vpcs`, `list_vswitches`, `list_security_groups`) that return plain dicts.
+- `aliyun_ecs.py` reuses `_ecs_client` from `aliyun_vpc` (imported directly) to call `RunInstances`/`DeleteInstance` via `alibabacloud_ecs20140526.models`, polling `DescribeInstances` until IPs are assigned; it also imports `EcsTemplate` from `app.models.template` and hard-codes billing/bandwidth constants at module level.
+- `crypto.py` is self-contained: derives a 32-byte key from the `ENCRYPTION_KEY` env var through `get_settings()`, then uses `cryptography.hazmat.primitives.ciphers.aead.AESGCM` to encrypt/decrypt as `base64(nonce || ciphertext || tag)`.
+Dependency direction is one-way: `aliyun_ecs` → `aliyun_vpc` + `settings_service` + `models.template`; `crypto` depends only on `app.config.get_settings`. No ORM or persistence lives here.

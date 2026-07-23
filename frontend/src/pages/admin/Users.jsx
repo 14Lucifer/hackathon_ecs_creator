@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Download, Upload, UserPlus } from 'lucide-react'
 import { api } from '../../services/api'
-import { Badge, ErrorBanner, Modal, Spinner, useToast } from '../../components/ui'
+import { Badge, EmptyState, ErrorBanner, Modal, Spinner, useToast } from '../../components/ui'
 
 function fmt(ts) {
   return ts ? new Date(ts).toLocaleDateString() : '—'
@@ -132,29 +133,38 @@ export default function Users() {
   return (
     <div className="max-w-5xl">
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold text-gray-900">User Management</h1>
+        <h1 className="page-title">User Management</h1>
         <div className="flex gap-2">
           <a className="btn-secondary" href="/api/users/batch-template" download>
+            <Download className="h-3.5 w-3.5" />
             Download Template
           </a>
           <button className="btn-secondary" onClick={() => fileRef.current?.click()} disabled={uploading}>
-            {uploading ? <Spinner text="Uploading..." /> : 'Batch Upload (Excel)'}
+            {uploading ? (
+              <Spinner text="Uploading..." />
+            ) : (
+              <>
+                <Upload className="h-3.5 w-3.5" />
+                Batch Upload (Excel)
+              </>
+            )}
           </button>
           <input ref={fileRef} type="file" accept=".xlsx" className="hidden" onChange={upload} />
           <button className="btn-primary" onClick={() => setModal({ mode: 'create' })}>
+            <UserPlus className="h-3.5 w-3.5" />
             Create User
           </button>
         </div>
       </div>
-      <p className="mb-4 text-xs text-gray-500">
+      <p className="mb-4 text-xs text-ink-500">
         Batch upload logic: if the email already exists, its name and password are overwritten;
         new emails are appended as new users.
       </p>
       <ErrorBanner message={error} onDismiss={() => setError('')} />
 
       <div className="card overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="min-w-full divide-y divide-ink-100">
+          <thead className="bg-ink-50/50">
             <tr>
               <th className="th">Email</th>
               <th className="th">Name</th>
@@ -164,10 +174,11 @@ export default function Users() {
               <th className="th">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-ink-100">
+            {users.length === 0 && <EmptyState text="No users yet." colSpan={6} />}
             {users.map((u) => (
-              <tr key={u.id} className={u.is_active ? '' : 'opacity-60'}>
-                <td className="td font-medium text-gray-900">{u.email}</td>
+              <tr key={u.id} className={`table-row ${u.is_active ? '' : 'opacity-60'}`}>
+                <td className="td font-medium text-ink-900">{u.email}</td>
                 <td className="td">{u.name}</td>
                 <td className="td capitalize">{u.role}</td>
                 <td className="td">
@@ -177,13 +188,13 @@ export default function Users() {
                 <td className="td">
                   <div className="flex gap-2">
                     <button
-                      className="btn-secondary !px-2 !py-1"
+                      className="btn-secondary btn-sm"
                       onClick={() => setModal({ mode: 'edit', user: u })}
                     >
                       Edit
                     </button>
                     {u.role !== 'admin' && (
-                      <button className="btn-danger !px-2 !py-1" onClick={() => toggleActive(u)}>
+                      <button className="btn-danger btn-sm" onClick={() => toggleActive(u)}>
                         {u.is_active ? 'Disable' : 'Enable'}
                       </button>
                     )}

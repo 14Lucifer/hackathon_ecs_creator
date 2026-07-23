@@ -1,0 +1,4 @@
+- Batch mutation endpoints iterate request IDs individually, committing each item in its own transaction and collecting per-item results into an `ApprovalBatchResult` so partial failures are reported without aborting the whole batch.
+- Route handlers raise `HTTPException` for client errors (404, 400) while delegating business validation and side effects to the service layer, keeping controllers thin.
+- Admin-scoped routes declare authorization once at the router level via `dependencies=[Depends(require_admin)]` rather than repeating `Depends` on every endpoint.
+- External API calls are wrapped in a try/except that maps missing configuration to 400 and generic provider errors to 502, centralizing error translation at the router boundary.

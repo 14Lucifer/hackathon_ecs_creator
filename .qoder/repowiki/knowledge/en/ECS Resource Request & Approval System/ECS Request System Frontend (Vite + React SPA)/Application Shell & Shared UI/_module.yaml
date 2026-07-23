@@ -1,0 +1,12 @@
+schema_version: 1
+module_path: frontend/app_shell
+title: Application Shell & Shared UI
+scope:
+    - frontend/src/App.jsx
+    - frontend/src/main.jsx
+    - frontend/src/services/api.js
+    - frontend/src/components/ui.jsx
+source_files: []
+depends_on: []
+related_to:
+    - path: backend/core_app

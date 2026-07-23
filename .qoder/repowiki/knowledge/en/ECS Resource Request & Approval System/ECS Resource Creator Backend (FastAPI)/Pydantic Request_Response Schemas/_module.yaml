@@ -1,0 +1,9 @@
+schema_version: 1
+module_path: backend/schemas
+title: Pydantic Request/Response Schemas
+scope:
+    - backend/app/schemas/
+source_files: []
+depends_on: []
+related_to:
+    - path: backend/requests_approvals

@@ -1,0 +1,6 @@
+- Domain enums subclass both `str` and `enum.Enum` and are persisted via `mapped_column(Enum(…, name="…"))` so the DB stores the string value.
+- Columns are declared with PEP 695 `Mapped[T] = mapped_column(...)` annotations instead of legacy `Column(...)` calls.
+- Cross-entity links are expressed as `ForeignKey` on the owning field plus an optional `relationship("OtherModel", lazy="joined")` attribute on the same class.
+- Timestamps default to `datetime.utcnow` at the column level, with `onupdate=datetime.utcnow` used for mutable rows like `EcsTemplate.updated_at` and `SystemSetting.updated_at`.
+- Per-domain constraints are kept as module-level constants (e.g. `MAX_TEMPLATES`, `ACTIVE_STATUSES`, `ENCRYPTED_KEYS`) next to the model that uses them, rather than inside the class body.
+- Public symbols are centralized in `models/__init__.py` via explicit imports and an `__all__` list, hiding internal file layout from consumers.

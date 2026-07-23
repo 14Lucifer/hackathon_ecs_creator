@@ -1,0 +1,11 @@
+schema_version: 1
+module_path: backend/aliyun_services
+title: Alibaba Cloud SDK Wrappers & Secret Encryption
+scope:
+    - backend/app/services/aliyun_ecs.py
+    - backend/app/services/aliyun_vpc.py
+    - backend/app/services/crypto.py
+source_files: []
+depends_on: []
+related_to:
+    - path: backend/requests_approvals

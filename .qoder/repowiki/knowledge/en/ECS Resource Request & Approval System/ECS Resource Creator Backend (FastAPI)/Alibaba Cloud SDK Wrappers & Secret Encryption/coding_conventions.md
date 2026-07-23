@@ -1,0 +1,4 @@
+- Cloud clients are constructed lazily inside private `_xxx_client(cfg)` helpers that build a `tea_openapi.models.Config` from `AliyunConfig`, rather than being passed in or cached globally.
+- SDK responses are normalized into flat Python dicts with stable keys (e.g. `{vpc_id, name, cidr_block}`) so callers never touch raw model attributes.
+- Optional string fields in returned dicts fall back to their id when the user-facing name is null (`x or x.id`).
+- Public entry points accept `cfg: AliyunConfig` as the first parameter instead of reading settings internally, keeping configuration explicit at the call site.

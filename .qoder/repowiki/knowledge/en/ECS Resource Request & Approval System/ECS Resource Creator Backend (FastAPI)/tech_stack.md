@@ -1,0 +1,1 @@
+FastAPI + Pydantic v2 for the API layer, SQLAlchemy ORM with Alembic migrations, and Alibaba Cloud Python SDKs (ECS/VPC) wrapped in `services.aliyun_ecs` / `services.aliyun_vpc`; AES-256-GCM via `services.crypto` for secrets at rest.

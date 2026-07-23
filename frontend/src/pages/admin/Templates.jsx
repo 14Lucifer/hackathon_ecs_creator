@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Plus } from 'lucide-react'
 import { api } from '../../services/api'
-import { ErrorBanner, Modal, Spinner, useToast } from '../../components/ui'
+import { EmptyState, ErrorBanner, Modal, Spinner, useToast } from '../../components/ui'
 
 const MAX_TEMPLATES = 6
 const EMPTY = {
@@ -73,11 +74,11 @@ function TemplateForm({ initial, onSubmit, onClose, saving }) {
           checked={form.public_ip_enabled}
           onChange={(e) => set('public_ip_enabled', e.target.checked)}
         />
-        <label htmlFor="public-ip" className="text-sm text-gray-700">
+        <label htmlFor="public-ip" className="text-[13px] text-ink-700">
           Enable Public IP (Pay-By-Traffic, 20 Mbps)
         </label>
       </div>
-      <p className="rounded-md bg-gray-50 px-3 py-2 text-xs text-gray-500">
+      <p className="rounded-lg border border-ink-100 bg-ink-50/60 px-3 py-2 text-xs text-ink-500">
         Fixed: Pay-As-You-Go billing · root user · auto-generated 16-char password at creation ·
         instance name &lt;user&gt;_&lt;seq&gt; · Region from Settings.
       </p>
@@ -145,13 +146,14 @@ export default function Templates() {
   return (
     <div className="max-w-5xl">
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold text-gray-900">ECS Templates ({templates.length}/{MAX_TEMPLATES})</h1>
+        <h1 className="page-title">ECS Templates ({templates.length}/{MAX_TEMPLATES})</h1>
         <span title={atLimit ? `Delete a template to create a new one (max ${MAX_TEMPLATES}).` : ''}>
           <button
             className="btn-primary"
             disabled={atLimit}
             onClick={() => setModal({ mode: 'create' })}
           >
+            <Plus className="h-3.5 w-3.5" />
             Create Template
           </button>
         </span>
@@ -159,8 +161,8 @@ export default function Templates() {
       <ErrorBanner message={error} onDismiss={() => setError('')} />
 
       <div className="card overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="min-w-full divide-y divide-ink-100">
+          <thead className="bg-ink-50/50">
             <tr>
               <th className="th">Name</th>
               <th className="th">Instance Type</th>
@@ -170,19 +172,18 @@ export default function Templates() {
               <th className="th">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-ink-100">
             {templates.length === 0 && (
-              <tr>
-                <td className="td text-gray-400" colSpan={6}>
-                  No templates yet — create one to let users request resources.
-                </td>
-              </tr>
+              <EmptyState
+                text="No templates yet — create one to let users request resources."
+                colSpan={6}
+              />
             )}
             {templates.map((t) => (
-              <tr key={t.id}>
-                <td className="td font-medium text-gray-900">{t.name}</td>
-                <td className="td font-mono text-xs">{t.instance_type}</td>
-                <td className="td max-w-48 truncate font-mono text-xs" title={t.image_id}>
+              <tr key={t.id} className="table-row">
+                <td className="td font-medium text-ink-900">{t.name}</td>
+                <td className="td mono">{t.instance_type}</td>
+                <td className="td mono max-w-48 truncate" title={t.image_id}>
                   {t.image_id}
                 </td>
                 <td className="td">
@@ -191,10 +192,10 @@ export default function Templates() {
                 <td className="td">{t.public_ip_enabled ? 'Enabled (20 Mbps)' : 'Disabled'}</td>
                 <td className="td">
                   <div className="flex gap-2">
-                    <button className="btn-secondary !px-2 !py-1" onClick={() => setModal({ mode: 'edit', tpl: t })}>
+                    <button className="btn-secondary btn-sm" onClick={() => setModal({ mode: 'edit', tpl: t })}>
                       Edit
                     </button>
-                    <button className="btn-danger !px-2 !py-1" onClick={() => remove(t)}>
+                    <button className="btn-danger btn-sm" onClick={() => remove(t)}>
                       Delete
                     </button>
                   </div>

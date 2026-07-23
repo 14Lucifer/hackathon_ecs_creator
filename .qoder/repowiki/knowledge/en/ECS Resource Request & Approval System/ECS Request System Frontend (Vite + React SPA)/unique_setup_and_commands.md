@@ -1,0 +1,1 @@
+`npm run dev` starts the Vite dev server; `npm run build` produces a static bundle served by the sibling Dockerfile's nginx container.

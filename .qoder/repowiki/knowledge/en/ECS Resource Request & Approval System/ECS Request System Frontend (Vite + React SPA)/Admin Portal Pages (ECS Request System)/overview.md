@@ -1,0 +1,1 @@
+React page components that render the admin sub-application for managing ECS resource requests, users, templates, active resources, audit logs, and system settings.

@@ -1,0 +1,1 @@
+Bootstraps the React app, wires authentication and role-based routing, exposes a cookie-session REST client, and provides shared UI primitives (badges, modals, toasts, spinner).

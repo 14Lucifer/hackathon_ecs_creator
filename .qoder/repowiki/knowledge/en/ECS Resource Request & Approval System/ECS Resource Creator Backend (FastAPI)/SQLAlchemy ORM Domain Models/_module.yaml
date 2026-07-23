@@ -1,0 +1,12 @@
+schema_version: 1
+module_path: backend/models
+title: SQLAlchemy ORM Domain Models
+scope:
+    - backend/app/models/
+source_files: []
+depends_on: []
+related_to:
+    - path: backend/auth_users
+    - path: backend/requests_approvals
+    - path: backend/settings_audit
+    - path: backend/templates

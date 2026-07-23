@@ -1,0 +1,184 @@
+# 知识卡导出索引文件
+schema_version: 1
+locale: en-US
+branch: main
+nodes_managed: true
+exported_at: "2026-07-22T23:02:25Z"
+modules:
+    "":
+        dir_name: ECS Resource Request & Approval System
+        title: ECS Resource Request & Approval System
+        scope:
+            - README.md
+            - .gitignore
+            - docker-compose.yml
+            - ecs-request-system-prompt.md
+            - .env.example
+        source_files: []
+        children:
+            - backend
+            - frontend
+        depends_on: []
+        related_to: []
+    backend:
+        dir_name: ECS Resource Creator Backend (FastAPI)
+        title: ECS Resource Creator Backend (FastAPI)
+        scope:
+            - backend/
+        source_files: []
+        children:
+            - backend/aliyun_services
+            - backend/auth_users
+            - backend/core_app
+            - backend/migrations
+            - backend/models
+            - backend/requests_approvals
+            - backend/schemas
+            - backend/settings_audit
+            - backend/templates
+        depends_on: []
+        related_to: []
+    backend/aliyun_services:
+        dir_name: Alibaba Cloud SDK Wrappers & Secret Encryption
+        title: Alibaba Cloud SDK Wrappers & Secret Encryption
+        scope:
+            - backend/app/services/aliyun_ecs.py
+            - backend/app/services/aliyun_vpc.py
+            - backend/app/services/crypto.py
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: backend/requests_approvals
+    backend/auth_users:
+        dir_name: Authentication & User Management API
+        title: Authentication & User Management API
+        scope:
+            - backend/app/routers/auth.py
+            - backend/app/routers/users.py
+            - backend/app/schemas/auth.py
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: backend/models
+    backend/core_app:
+        dir_name: FastAPI Application Bootstrap & Runtime Configuration
+        title: FastAPI Application Bootstrap & Runtime Configuration
+        scope:
+            - backend/app/config.py
+            - backend/app/database.py
+            - backend/app/main.py
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: frontend/app_shell
+    backend/migrations:
+        dir_name: Database Schema Migrations (Alembic)
+        title: Database Schema Migrations (Alembic)
+        scope:
+            - backend/alembic/
+            - backend/alembic.ini
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    backend/models:
+        dir_name: SQLAlchemy ORM Domain Models
+        title: SQLAlchemy ORM Domain Models
+        scope:
+            - backend/app/models/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: backend/auth_users
+            - path: backend/requests_approvals
+            - path: backend/settings_audit
+            - path: backend/templates
+    backend/requests_approvals:
+        dir_name: Resource Request & Approval Workflow
+        title: Resource Request & Approval Workflow
+        scope:
+            - backend/app/routers/requests.py
+            - backend/app/routers/approvals.py
+            - backend/app/services/approval.py
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: backend/aliyun_services
+            - path: backend/models
+            - path: backend/schemas
+            - path: frontend/admin_pages
+    backend/schemas:
+        dir_name: Pydantic Request_Response Schemas
+        title: Pydantic Request/Response Schemas
+        scope:
+            - backend/app/schemas/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: backend/requests_approvals
+    backend/settings_audit:
+        dir_name: Admin Settings & Audit Log API
+        title: Admin Settings & Audit Log API
+        scope:
+            - backend/app/routers/settings.py
+            - backend/app/routers/audit.py
+            - backend/app/services/settings_service.py
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: backend/models
+            - path: frontend/admin_pages
+    backend/templates:
+        dir_name: ECS Template Management (Admin CRUD + User Listing)
+        title: ECS Template Management (Admin CRUD + User Listing)
+        scope:
+            - backend/app/routers/templates.py
+            - backend/app/models/template.py
+            - backend/app/schemas/template.py
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: backend/models
+    frontend:
+        dir_name: ECS Request System Frontend (Vite + React SPA)
+        title: ECS Request System Frontend (Vite + React SPA)
+        scope:
+            - frontend/
+        source_files: []
+        children:
+            - frontend/admin_pages
+            - frontend/app_shell
+        depends_on: []
+        related_to: []
+    frontend/admin_pages:
+        dir_name: Admin Portal Pages (ECS Request System)
+        title: Admin Portal Pages (ECS Request System)
+        scope:
+            - frontend/src/pages/admin/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: backend/requests_approvals
+            - path: backend/settings_audit
+    frontend/app_shell:
+        dir_name: Application Shell & Shared UI
+        title: Application Shell & Shared UI
+        scope:
+            - frontend/src/App.jsx
+            - frontend/src/main.jsx
+            - frontend/src/services/api.js
+            - frontend/src/components/ui.jsx
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: backend/core_app

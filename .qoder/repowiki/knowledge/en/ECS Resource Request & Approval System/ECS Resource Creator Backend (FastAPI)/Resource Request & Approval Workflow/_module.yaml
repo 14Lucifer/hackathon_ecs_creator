@@ -1,0 +1,14 @@
+schema_version: 1
+module_path: backend/requests_approvals
+title: Resource Request & Approval Workflow
+scope:
+    - backend/app/routers/requests.py
+    - backend/app/routers/approvals.py
+    - backend/app/services/approval.py
+source_files: []
+depends_on: []
+related_to:
+    - path: backend/aliyun_services
+    - path: backend/models
+    - path: backend/schemas
+    - path: frontend/admin_pages

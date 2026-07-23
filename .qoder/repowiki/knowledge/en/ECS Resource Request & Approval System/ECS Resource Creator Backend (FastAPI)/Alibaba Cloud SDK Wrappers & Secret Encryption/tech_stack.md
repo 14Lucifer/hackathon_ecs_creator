@@ -1,0 +1,1 @@
+Alibaba Cloud Python SDK v2 (`alibabacloud_ecs20140526`, `alibabacloud_vpc20160428`) over the Tea OpenAPI runtime; AES-256-GCM via `cryptography.hazmat.primitives.ciphers.aead.AESGCM` with SHA-256-derived keys.

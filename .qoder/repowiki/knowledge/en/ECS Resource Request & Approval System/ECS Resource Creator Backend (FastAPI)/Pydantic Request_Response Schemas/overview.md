@@ -1,0 +1,1 @@
+Pydantic v2 models defining the API contract for users, templates, requests, approvals, audit logs, and settings across the ECS creator backend.

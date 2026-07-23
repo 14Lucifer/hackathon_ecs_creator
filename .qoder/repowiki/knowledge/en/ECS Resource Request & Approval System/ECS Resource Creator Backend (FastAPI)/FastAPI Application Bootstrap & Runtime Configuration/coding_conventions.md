@@ -1,0 +1,2 @@
+- Shared singletons are exposed through `@lru_cache`-decorated getter functions (e.g. `get_settings()`) rather than imported directly, so callers never construct fresh instances.
+- Database sessions follow a try/finally pattern — either via the `get_db()` generator dependency or inline in seed/admin code — ensuring `db.close()` runs on every path.

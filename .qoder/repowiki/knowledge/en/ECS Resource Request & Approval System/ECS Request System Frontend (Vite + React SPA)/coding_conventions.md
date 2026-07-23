@@ -1,0 +1,4 @@
+- Authentication state lives exclusively in `App.jsx`'s `AuthContext`; child pages consume it via the exported `useAuth()` hook rather than calling `api.me()` directly.
+- Route-level guards in `App.jsx` enforce role-based access; page components assume they are already authorized and do not re-check roles.
+- All network requests flow through the centralized `services/api.js` client; components never call `fetch`/`axios` directly.
+- Shared visual primitives (badges, modals, toasts, spinner) are imported from `components/ui.jsx` instead of being re-implemented per page.

@@ -1,0 +1,5 @@
+- API endpoints are grouped by domain inside a single `api` object whose method names mirror backend resources (e.g. `listTemplates`, `createTemplate`, `updateTemplate(id, data)`, `deleteTemplate(id)`).
+- Authentication is modelled as a `session-expired` custom DOM event: `api.js` dispatches it on 401 and `App.jsx` subscribes to clear state and navigate to `/login`.
+- Shared UI components are pure functional components exported from `components/ui.jsx`, styled exclusively with Tailwind utility classes and no external CSS modules.
+- Global side-effectful state (toast notifications, user session) is exposed through React Context providers wrapped at the root in `main.jsx` and consumed via dedicated hooks (`useToast`, `useAuth`).
+- Form uploads use `FormData` with an explicit `isForm: true` flag so the wrapper skips setting `Content-Type` and lets the browser set multipart boundaries.

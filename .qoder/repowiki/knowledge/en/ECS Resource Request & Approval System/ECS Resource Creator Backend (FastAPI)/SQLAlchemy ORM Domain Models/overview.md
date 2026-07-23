@@ -1,0 +1,1 @@
+SQLAlchemy declarative models and enums for the ECS resource-request workflow: users, templates, requests, audit logs, server-side sessions, and key/value system settings.

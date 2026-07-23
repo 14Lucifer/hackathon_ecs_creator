@@ -1,0 +1,1 @@
+Single-page React application that boots the ECS request system, wires role-based routing between a user portal and an admin sub-app, and exposes a cookie-session REST client.

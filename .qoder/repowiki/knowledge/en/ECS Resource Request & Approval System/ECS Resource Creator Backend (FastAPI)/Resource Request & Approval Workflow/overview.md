@@ -1,0 +1,1 @@
+FastAPI endpoints and service logic for users to submit ECS resource requests and admins to approve/reject them, including cascading network selection and deletion workflows.

@@ -4,6 +4,13 @@ Web-based ECS instance request and approval system for Alibaba Cloud. Users subm
 resource requests based on admin-configured templates; admins approve or reject
 requests, which triggers actual ECS instance creation via Alibaba Cloud APIs.
 
+## Documentation
+
+| Guide | Audience | Contents |
+|-------|----------|----------|
+| [USER_GUIDE.md](USER_GUIDE.md) | End users & admins | Signing in, submitting/tracking requests, approvals, templates, users, settings |
+| [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) | Operators | Architecture, `.env` configuration, first deployment, backups, production hardening, troubleshooting |
+
 ## Stack
 
 - **Backend**: Python 3.11 / FastAPI, SQLAlchemy 2.0 + Alembic, Alibaba Cloud SDK v2
@@ -32,6 +39,10 @@ Then, in the admin portal:
 Users log in at the same URL, pick a template and submit a request (max 2 active
 per user). Admins approve via the cascading Region → VPC → vSwitch → Security Group
 modal, which calls `RunInstances`; deletion approvals call `DeleteInstance` (force).
+
+See the [User Guide](USER_GUIDE.md) for the full walkthrough of both portals, and
+the [Deployment Guide](DEPLOYMENT_GUIDE.md) for configuration details, operations
+(backups, rebuilds, migrations) and the production hardening checklist.
 
 ## Development
 

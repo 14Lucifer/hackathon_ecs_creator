@@ -1,0 +1,1 @@
+Docker Compose (nginx:alpine, postgres:15-alpine, custom-built frontend/backend images) is the single runtime for both children; they never talk directly — all inter-process communication flows through nginx's `/api` proxy rule.

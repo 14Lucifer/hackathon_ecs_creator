@@ -1,0 +1,4 @@
+- Database access goes through `Depends(get_db)` injected as a `sqlalchemy.orm.Session` parameter rather than direct engine usage.
+- Password handling is centralized in `app.services.password`: `hash_password` for writes and `verify_password` for reads — routers never call bcrypt directly.
+- Admin-only routes are protected at the router level via a single `dependencies=[Depends(require_admin)]` argument instead of per-route guards.
+- Pydantic response models (`UserOut`, `SessionUser`) are constructed explicitly from ORM entities via helper functions like `_to_out` rather than relying on auto-mapping.

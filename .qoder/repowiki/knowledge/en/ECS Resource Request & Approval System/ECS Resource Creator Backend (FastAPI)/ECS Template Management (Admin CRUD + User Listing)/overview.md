@@ -1,0 +1,1 @@
+Defines the ECS template SQLAlchemy model, Pydantic schemas, and FastAPI router that lets admins create/update/delete templates while all authenticated users can list them.

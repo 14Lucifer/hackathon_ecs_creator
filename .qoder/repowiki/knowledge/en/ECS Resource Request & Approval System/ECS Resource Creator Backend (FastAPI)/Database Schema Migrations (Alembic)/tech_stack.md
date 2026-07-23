@@ -1,0 +1,1 @@
+Alembic + SQLAlchemy Declarative; enum columns are implemented as native `sa.Enum` objects created per-revision rather than shared model-level definitions.

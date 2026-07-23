@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Check, X } from 'lucide-react'
 import { api } from '../../services/api'
-import { Badge, ErrorBanner, Modal, Spinner, useToast } from '../../components/ui'
+import { Badge, EmptyState, ErrorBanner, Modal, Spinner, StatCard, useToast } from '../../components/ui'
 
 function fmt(ts) {
   return ts ? new Date(ts).toLocaleString() : '—'
@@ -83,7 +84,7 @@ function ApproveModal({ requestIds, onClose, onDone }) {
   if (result) {
     return (
       <Modal title="Approval Result" onClose={onClose} wide>
-        <p className="mb-3 text-sm font-medium text-gray-900">
+        <p className="mb-3 text-sm font-medium text-ink-900">
           {result.succeeded} approved successfully, {result.failed} failed
         </p>
         <ul className="space-y-1 text-sm">
@@ -115,7 +116,7 @@ function ApproveModal({ requestIds, onClose, onDone }) {
         {/* Step 1: Region */}
         <div>
           <label className="label">Step 1 — Region ID (from Settings)</label>
-          <input className="input bg-gray-100" value={region} readOnly />
+          <input className="input bg-ink-50 text-ink-500" value={region} readOnly />
         </div>
 
         {/* Step 2: VPC */}
@@ -207,7 +208,7 @@ function ApproveModal({ requestIds, onClose, onDone }) {
 
         {/* Step 5: Confirm */}
         {stepReady.confirm && (
-          <div className="border-t border-gray-200 pt-4 text-right">
+          <div className="border-t border-ink-100 pt-4 text-right">
             <button className="btn-primary" onClick={confirm} disabled={!!loadingStep}>
               Confirm Approve
             </button>
@@ -312,13 +313,21 @@ export default function Approvals() {
 
   return (
     <div className="max-w-5xl">
-      <h1 className="mb-4 text-xl font-bold text-gray-900">Approval Management</h1>
+      <h1 className="page-title mb-1">Approval Management</h1>
+      <p className="mb-5 text-[13px] text-ink-500">
+        Review pending resource requests and deletion requests.
+      </p>
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <StatCard label="Pending Requests" value={pending.length} hint="awaiting approval" />
+        <StatCard label="Deletion Requests" value={deletions.length} hint="awaiting decision" />
+        <StatCard label="Selected" value={selected.length} hint="for batch action" />
+      </div>
       <ErrorBanner message={error} onDismiss={() => setError('')} />
 
       {/* Pending resource requests */}
-      <div className="card mb-8">
-        <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
-          <h2 className="text-sm font-semibold text-gray-900">
+      <div className="card mb-8 overflow-hidden">
+        <div className="flex items-center justify-between border-b border-ink-100 px-4 py-3">
+          <h2 className="section-title flex items-center gap-2">
             Pending Requests <Badge status="pending" />
           </h2>
           <div className="flex gap-2">
@@ -327,6 +336,7 @@ export default function Approvals() {
               disabled={selected.length === 0}
               onClick={() => setModal({ type: 'approve', ids: selected })}
             >
+              <Check className="h-3.5 w-3.5" />
               Batch Approve ({selected.length})
             </button>
             <button
@@ -334,12 +344,13 @@ export default function Approvals() {
               disabled={selected.length === 0}
               onClick={() => setModal({ type: 'reject', ids: selected })}
             >
+              <X className="h-3.5 w-3.5" />
               Batch Reject ({selected.length})
             </button>
           </div>
         </div>
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="min-w-full divide-y divide-ink-100">
+          <thead className="bg-ink-50/50">
             <tr>
               <th className="th w-10">
                 <input
@@ -355,33 +366,27 @@ export default function Approvals() {
               <th className="th">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
-            {pending.length === 0 && (
-              <tr>
-                <td className="td text-gray-400" colSpan={6}>
-                  No pending requests.
-                </td>
-              </tr>
-            )}
+          <tbody className="divide-y divide-ink-100">
+            {pending.length === 0 && <EmptyState text="No pending requests." colSpan={6} />}
             {pending.map((r) => (
-              <tr key={r.id}>
+              <tr key={r.id} className="table-row">
                 <td className="td">
                   <input type="checkbox" checked={selected.includes(r.id)} onChange={() => toggle(r.id)} />
                 </td>
-                <td className="td font-medium text-gray-900">{r.user_name}</td>
+                <td className="td font-medium text-ink-900">{r.user_name}</td>
                 <td className="td">{r.user_email}</td>
                 <td className="td">{r.template_name}</td>
-                <td className="td">{fmt(r.submitted_at)}</td>
+                <td className="td tabular-nums">{fmt(r.submitted_at)}</td>
                 <td className="td">
                   <div className="flex gap-2">
                     <button
-                      className="btn-primary !px-2 !py-1"
+                      className="btn-primary btn-sm"
                       onClick={() => setModal({ type: 'approve', ids: [r.id] })}
                     >
                       Approve
                     </button>
                     <button
-                      className="btn-danger !px-2 !py-1"
+                      className="btn-danger btn-sm"
                       onClick={() => setModal({ type: 'reject', ids: [r.id] })}
                     >
                       Reject
@@ -395,14 +400,14 @@ export default function Approvals() {
       </div>
 
       {/* Pending deletion requests */}
-      <div className="card">
-        <div className="border-b border-gray-200 px-4 py-3">
-          <h2 className="text-sm font-semibold text-gray-900">
+      <div className="card overflow-hidden">
+        <div className="border-b border-ink-100 px-4 py-3">
+          <h2 className="section-title flex items-center gap-2">
             Deletion Requests <Badge status="delete_pending" />
           </h2>
         </div>
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="min-w-full divide-y divide-ink-100">
+          <thead className="bg-ink-50/50">
             <tr>
               <th className="th">User Name</th>
               <th className="th">User Email</th>
@@ -411,20 +416,14 @@ export default function Approvals() {
               <th className="th">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
-            {deletions.length === 0 && (
-              <tr>
-                <td className="td text-gray-400" colSpan={5}>
-                  No deletion requests.
-                </td>
-              </tr>
-            )}
+          <tbody className="divide-y divide-ink-100">
+            {deletions.length === 0 && <EmptyState text="No deletion requests." colSpan={5} />}
             {deletions.map((r) => (
-              <tr key={r.id}>
-                <td className="td font-medium text-gray-900">{r.user_name}</td>
+              <tr key={r.id} className="table-row">
+                <td className="td font-medium text-ink-900">{r.user_name}</td>
                 <td className="td">{r.user_email}</td>
                 <td className="td">{r.template_name}</td>
-                <td className="td">{fmt(r.submitted_at)}</td>
+                <td className="td tabular-nums">{fmt(r.submitted_at)}</td>
                 <td className="td">
                   <div className="flex items-center gap-2">
                     {busy ? (
@@ -432,13 +431,13 @@ export default function Approvals() {
                     ) : (
                       <>
                         <button
-                          className="btn-primary !px-2 !py-1"
+                          className="btn-primary btn-sm"
                           onClick={() => decideDeletion([r.id], true)}
                         >
                           Approve Deletion
                         </button>
                         <button
-                          className="btn-secondary !px-2 !py-1"
+                          className="btn-secondary btn-sm"
                           onClick={() => decideDeletion([r.id], false)}
                         >
                           Deny

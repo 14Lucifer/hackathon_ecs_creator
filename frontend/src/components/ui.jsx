@@ -1,15 +1,25 @@
-// Shared small UI components: badges, spinner, modal, error banner, toasts, password reveal.
+// Shared UI components — Clean SaaS Minimal style (Linear/Vercel inspired).
 import { createContext, useCallback, useContext, useState } from 'react'
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Eye,
+  EyeOff,
+  Inbox,
+  Loader2,
+  X,
+  XCircle,
+} from 'lucide-react'
 
-// --- Status badge -------------------------------------------------------------
+// --- Status badge (dot + label, subtle tinted pill) ---------------------------
 const BADGE_STYLES = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  approved: 'bg-green-100 text-green-800',
-  rejected: 'bg-red-100 text-red-800',
-  delete_pending: 'bg-orange-100 text-orange-800',
-  deleted: 'bg-gray-200 text-gray-600',
-  active: 'bg-blue-100 text-blue-800',
-  inactive: 'bg-gray-100 text-gray-500',
+  pending: { chip: 'bg-amber-50 text-amber-700 ring-amber-600/20', dot: 'bg-amber-500' },
+  approved: { chip: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20', dot: 'bg-emerald-500' },
+  rejected: { chip: 'bg-red-50 text-red-700 ring-red-600/20', dot: 'bg-red-500' },
+  delete_pending: { chip: 'bg-orange-50 text-orange-700 ring-orange-600/20', dot: 'bg-orange-500' },
+  deleted: { chip: 'bg-ink-100 text-ink-500 ring-ink-500/20', dot: 'bg-ink-500/50' },
+  active: { chip: 'bg-blue-50 text-blue-700 ring-blue-600/20', dot: 'bg-blue-500' },
+  inactive: { chip: 'bg-ink-50 text-ink-500 ring-ink-500/15', dot: 'bg-ink-200' },
 }
 const BADGE_LABELS = {
   pending: 'Pending Approval',
@@ -22,12 +32,12 @@ const BADGE_LABELS = {
 }
 
 export function Badge({ status }) {
+  const s = BADGE_STYLES[status] || BADGE_STYLES.inactive
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-        BADGE_STYLES[status] || 'bg-gray-100 text-gray-600'
-      }`}
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${s.chip}`}
     >
+      <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
       {BADGE_LABELS[status] || status}
     </span>
   )
@@ -36,25 +46,31 @@ export function Badge({ status }) {
 // --- Spinner -------------------------------------------------------------------
 export function Spinner({ text }) {
   return (
-    <span className="inline-flex items-center gap-2 text-sm text-gray-600">
-      <svg className="h-4 w-4 animate-spin text-blue-600" viewBox="0 0 24 24" fill="none">
-        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-      </svg>
+    <span className="inline-flex items-center gap-2 text-[13px] text-ink-500">
+      <Loader2 className="h-4 w-4 animate-spin text-ink-700" />
       {text}
     </span>
   )
 }
 
-// --- Modal -----------------------------------------------------------------------
+// --- Modal (fade backdrop + scale-in panel) --------------------------------------
 export function Modal({ title, children, onClose, wide = false }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className={`card w-full ${wide ? 'max-w-2xl' : 'max-w-md'} max-h-[90vh] overflow-y-auto`}>
-        <div className="flex items-center justify-between border-b border-gray-200 px-5 py-3">
-          <h3 className="text-base font-semibold text-gray-900">{title}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600" aria-label="Close">
-            ✕
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/40 p-4 backdrop-blur-[2px] animate-fade-in"
+      onMouseDown={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div
+        className={`card w-full ${wide ? 'max-w-2xl' : 'max-w-md'} max-h-[90vh] overflow-y-auto shadow-pop animate-scale-in`}
+      >
+        <div className="flex items-center justify-between border-b border-ink-100 px-5 py-3.5">
+          <h3 className="text-[15px] font-semibold tracking-tight text-ink-900">{title}</h3>
+          <button
+            onClick={onClose}
+            className="rounded-md p-1 text-ink-500 transition-colors hover:bg-ink-50 hover:text-ink-900"
+            aria-label="Close"
+          >
+            <X className="h-4 w-4" />
           </button>
         </div>
         <div className="px-5 py-4">{children}</div>
@@ -67,14 +83,18 @@ export function Modal({ title, children, onClose, wide = false }) {
 export function ErrorBanner({ message, onDismiss }) {
   if (!message) return null
   return (
-    <div className="mb-4 flex items-start justify-between rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+    <div className="mb-4 flex items-start justify-between rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-800 animate-slide-up">
       <span className="flex items-start gap-2">
-        <span aria-hidden>⚠️</span>
+        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
         <span className="break-all">{message}</span>
       </span>
       {onDismiss && (
-        <button onClick={onDismiss} className="ml-3 font-bold text-red-500 hover:text-red-700">
-          ✕
+        <button
+          onClick={onDismiss}
+          className="ml-3 rounded p-0.5 text-red-400 transition-colors hover:text-red-700"
+          aria-label="Dismiss"
+        >
+          <X className="h-4 w-4" />
         </button>
       )}
     </div>
@@ -85,17 +105,44 @@ export function ErrorBanner({ message, onDismiss }) {
 export function PasswordReveal({ password }) {
   const [visible, setVisible] = useState(false)
   return (
-    <span className="inline-flex items-center gap-2 font-mono">
-      <span>{visible ? password : '••••••••••••••••'}</span>
+    <span className="inline-flex items-center gap-2">
+      <span className="mono">{visible ? password : '••••••••••••••••'}</span>
       <button
         type="button"
         onClick={() => setVisible((v) => !v)}
-        className="text-gray-400 hover:text-gray-600"
+        className="rounded p-0.5 text-ink-500 transition-colors hover:text-ink-900"
         title={visible ? 'Hide password' : 'Show password'}
       >
-        {visible ? '🙈' : '👁'}
+        {visible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
       </button>
     </span>
+  )
+}
+
+// --- Empty state for tables -------------------------------------------------------
+export function EmptyState({ text, colSpan }) {
+  return (
+    <tr>
+      <td className="td" colSpan={colSpan}>
+        <div className="flex flex-col items-center gap-1.5 py-8 text-center">
+          <Inbox className="h-6 w-6 text-ink-200" />
+          <span className="text-[13px] text-ink-500">{text}</span>
+        </div>
+      </td>
+    </tr>
+  )
+}
+
+// --- Stat summary card ---------------------------------------------------------------
+export function StatCard({ label, value, hint }) {
+  return (
+    <div className="stat-card">
+      <span className="text-xs font-medium text-ink-500">{label}</span>
+      <span className="text-2xl font-semibold tracking-tight tabular-nums text-ink-900">
+        {value}
+      </span>
+      {hint && <span className="text-[11px] text-ink-500/70">{hint}</span>}
+    </div>
   )
 }
 
@@ -118,10 +165,13 @@ export function ToastProvider({ children }) {
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`rounded-md px-4 py-2 text-sm text-white shadow-lg ${
-              t.type === 'error' ? 'bg-red-600' : 'bg-gray-900'
-            }`}
+            className="flex items-center gap-2 rounded-lg border border-ink-100 bg-white px-4 py-2.5 text-[13px] font-medium text-ink-900 shadow-pop animate-slide-up"
           >
+            {t.type === 'error' ? (
+              <XCircle className="h-4 w-4 text-red-500" />
+            ) : (
+              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+            )}
             {t.message}
           </div>
         ))}

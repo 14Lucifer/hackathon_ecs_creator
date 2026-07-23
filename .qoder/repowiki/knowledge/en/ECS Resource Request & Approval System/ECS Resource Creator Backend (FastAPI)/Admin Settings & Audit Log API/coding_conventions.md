@@ -1,0 +1,3 @@
+- Routers protect every route by attaching `Depends(require_admin)` at the `APIRouter` level rather than per-endpoint.
+- Secret keys listed in `ENCRYPTED_KEYS` are never returned in plaintext: the GET handler masks them with a constant `MASK` string and the service layer encrypts on write / decrypts on read.
+- Optional update fields are skipped when their value equals the mask placeholder or is `None`, allowing clients to omit unchanged secrets without overwriting them.

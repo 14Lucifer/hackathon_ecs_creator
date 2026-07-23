@@ -1,0 +1,5 @@
+Three-file MVC split inside `app/`:
+- `models/template.py` declares the `EcsTemplate` ORM entity on table `ecs_templates` with a module-level `MAX_TEMPLATES = 6` constant that caps creation.
+- `schemas/template.py` defines three Pydantic models — `TemplateCreate`, `TemplateUpdate` (inherits from Create), and read-only `TemplateOut` with `from_attributes = True` for ORM serialization; `DiskCategory` is a `Literal` enum of allowed disk types.
+- `routers/templates.py` mounts an `APIRouter(prefix="/templates")` exposing GET /templates (authenticated via `get_current_user`) and POST/PUT/DELETE (guarded by `require_admin`). The delete endpoint cross-checks `ResourceRequest` against active statuses (`pending`, `approved`, `delete_pending`) before allowing removal, enforcing referential integrity at the API layer.
+Dependency direction: router → schema/model constants → SQLAlchemy Base; no reverse imports. Business rules (max count, in-use guard) live in the router rather than the model.

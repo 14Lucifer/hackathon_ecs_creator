@@ -1,7 +1,15 @@
 import { useCallback, useEffect, useState } from 'react'
+import { LogOut, Plus, Trash2 } from 'lucide-react'
 import { useAuth } from '../../App'
 import { api } from '../../services/api'
-import { Badge, ErrorBanner, PasswordReveal, Spinner, useToast } from '../../components/ui'
+import {
+  Badge,
+  EmptyState,
+  ErrorBanner,
+  PasswordReveal,
+  Spinner,
+  useToast,
+} from '../../components/ui'
 
 function fmt(ts) {
   return ts ? new Date(ts).toLocaleString() : '—'
@@ -9,7 +17,7 @@ function fmt(ts) {
 
 function TemplateSpecs({ t }) {
   return (
-    <span className="text-xs text-gray-500">
+    <span className="text-xs text-ink-500">
       {t.instance_type} · {t.system_disk_category} {t.system_disk_size_gb}GB ·{' '}
       {t.public_ip_enabled ? 'Public IP' : 'No Public IP'}
     </span>
@@ -18,35 +26,35 @@ function TemplateSpecs({ t }) {
 
 function RequestCard({ req, onDeleteRequest, deleting }) {
   return (
-    <div className="card p-5">
+    <div className="card p-5 transition-shadow hover:shadow-pop">
       <div className="flex items-start justify-between">
         <div>
-          <div className="font-semibold text-gray-900">{req.template.name}</div>
+          <div className="font-semibold tracking-tight text-ink-900">{req.template.name}</div>
           <TemplateSpecs t={req.template} />
-          <div className="mt-1 text-xs text-gray-400">Submitted {fmt(req.submitted_at)}</div>
+          <div className="mt-1 text-xs text-ink-500/70">Submitted {fmt(req.submitted_at)}</div>
         </div>
         <Badge status={req.status} />
       </div>
 
       {req.status === 'rejected' && (
-        <div className="mt-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="mt-3 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-[13px] text-red-700">
           <span className="font-medium">Reason: </span>
           {req.reject_reason}
         </div>
       )}
 
       {(req.status === 'approved' || req.status === 'delete_pending') && (
-        <div className="mt-3 space-y-1 rounded-md bg-gray-50 px-3 py-2 text-sm">
+        <div className="mt-3 space-y-1.5 rounded-lg border border-ink-100 bg-ink-50/60 px-3 py-2.5 text-[13px]">
           <div>
-            <span className="font-medium text-gray-500">Public Access: </span>
-            <span className="font-mono">{req.public_ip ? `root@${req.public_ip}` : '—'}</span>
+            <span className="font-medium text-ink-500">Public Access: </span>
+            <span className="mono">{req.public_ip ? `root@${req.public_ip}` : '—'}</span>
           </div>
           <div>
-            <span className="font-medium text-gray-500">Private Access: </span>
-            <span className="font-mono">{req.private_ip ? `root@${req.private_ip}` : '—'}</span>
+            <span className="font-medium text-ink-500">Private Access: </span>
+            <span className="mono">{req.private_ip ? `root@${req.private_ip}` : '—'}</span>
           </div>
           <div>
-            <span className="font-medium text-gray-500">Password: </span>
+            <span className="font-medium text-ink-500">Password: </span>
             {req.password ? <PasswordReveal password={req.password} /> : '—'}
           </div>
         </div>
@@ -54,13 +62,14 @@ function RequestCard({ req, onDeleteRequest, deleting }) {
 
       {req.status === 'approved' && (
         <div className="mt-3">
-          <button className="btn-danger" onClick={() => onDeleteRequest(req.id)} disabled={deleting}>
+          <button className="btn-danger btn-sm" onClick={() => onDeleteRequest(req.id)} disabled={deleting}>
+            <Trash2 className="h-3 w-3" />
             Request Deletion
           </button>
         </div>
       )}
       {req.status === 'delete_pending' && (
-        <div className="mt-3 text-sm text-orange-600">Deletion pending admin approval.</div>
+        <div className="mt-3 text-[13px] text-orange-600">Deletion pending admin approval.</div>
       )}
     </div>
   )
@@ -126,15 +135,16 @@ export default function UserPortal() {
   const active = requests.filter((r) => r.is_active)
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-6">
-      <header className="mb-6 flex items-center justify-between">
+    <div className="mx-auto max-w-4xl px-4 py-8 animate-slide-up">
+      <header className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">My ECS Resources</h1>
-          <p className="text-sm text-gray-500">
+          <h1 className="page-title">My ECS Resources</h1>
+          <p className="text-[13px] text-ink-500">
             Signed in as {user.name} ({user.email})
           </p>
         </div>
         <button className="btn-secondary" onClick={logout}>
+          <LogOut className="h-3.5 w-3.5" />
           Log out
         </button>
       </header>
@@ -142,8 +152,8 @@ export default function UserPortal() {
       <ErrorBanner message={error} onDismiss={() => setError('')} />
 
       {/* New request */}
-      <section className="card mb-6 p-5">
-        <h2 className="mb-3 text-base font-semibold text-gray-900">New Resource Request</h2>
+      <section className="card mb-8 p-5">
+        <h2 className="section-title mb-3">New Resource Request</h2>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <select
             className="input sm:max-w-md"
@@ -159,21 +169,28 @@ export default function UserPortal() {
             ))}
           </select>
           <button className="btn-primary" onClick={submit} disabled={!selected || submitting}>
-            {submitting ? <Spinner text="Submitting..." /> : 'Submit Request'}
+            {submitting ? (
+              <Spinner text="Submitting..." />
+            ) : (
+              <>
+                <Plus className="h-3.5 w-3.5" />
+                Submit Request
+              </>
+            )}
           </button>
         </div>
-        <p className="mt-2 text-xs text-gray-400">
+        <p className="mt-2 text-xs text-ink-500/70">
           You may have at most 2 active requests (pending, approved or pending deletion).
         </p>
       </section>
 
       {/* Active requests */}
-      <section className="mb-6">
-        <h2 className="mb-3 text-base font-semibold text-gray-900">My Active Requests</h2>
+      <section className="mb-8">
+        <h2 className="section-title mb-3">My Active Requests</h2>
         {loading ? (
           <Spinner text="Loading..." />
         ) : active.length === 0 ? (
-          <p className="text-sm text-gray-500">No active requests.</p>
+          <p className="text-[13px] text-ink-500">No active requests.</p>
         ) : (
           <div className="space-y-4">
             {active.map((r) => (
@@ -185,10 +202,10 @@ export default function UserPortal() {
 
       {/* History */}
       <section>
-        <h2 className="mb-3 text-base font-semibold text-gray-900">Request History</h2>
+        <h2 className="section-title mb-3">Request History</h2>
         <div className="card overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-ink-100">
+            <thead className="bg-ink-50/50">
               <tr>
                 <th className="th">Template Name</th>
                 <th className="th">Submitted At</th>
@@ -196,18 +213,12 @@ export default function UserPortal() {
                 <th className="th">Active</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
-              {requests.length === 0 && (
-                <tr>
-                  <td className="td text-gray-400" colSpan={4}>
-                    No requests yet.
-                  </td>
-                </tr>
-              )}
+            <tbody className="divide-y divide-ink-100">
+              {requests.length === 0 && <EmptyState text="No requests yet." colSpan={4} />}
               {requests.map((r) => (
-                <tr key={r.id}>
-                  <td className="td font-medium text-gray-900">{r.template.name}</td>
-                  <td className="td">{fmt(r.submitted_at)}</td>
+                <tr key={r.id} className="table-row">
+                  <td className="td font-medium text-ink-900">{r.template.name}</td>
+                  <td className="td tabular-nums">{fmt(r.submitted_at)}</td>
                   <td className="td">
                     <Badge status={r.status} />
                   </td>

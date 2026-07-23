@@ -1,0 +1,4 @@
+- Every domain exposes paired create/update and `*Out` response models, with `from_attributes = True` on output models to serialize ORM instances directly.
+- Input validation uses Pydantic `Field(...)` constraints (`min_length`, `ge`, `le`, `min_length=1`) rather than custom validators or regex patterns.
+- Optional fields default to `None` instead of using `Optional[...] | None` union syntax, keeping schema signatures flat.
+- Public API surface is centralized through `app.schemas.__init__.py` which re-exports all models in `__all__`, hiding internal file layout from consumers.

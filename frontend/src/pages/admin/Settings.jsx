@@ -55,11 +55,14 @@ export default function Settings() {
 
   return (
     <div className="max-w-2xl">
-      <h1 className="mb-4 text-xl font-bold text-gray-900">System Settings</h1>
+      <h1 className="page-title mb-1">System Settings</h1>
+      <p className="mb-5 text-[13px] text-ink-500">
+        Alibaba Cloud credentials and admin account security.
+      </p>
       <ErrorBanner message={error} onDismiss={() => setError('')} />
 
       <form onSubmit={save} className="card mb-8 space-y-4 p-5">
-        <h2 className="text-base font-semibold text-gray-900">Alibaba Cloud</h2>
+        <h2 className="section-title">Alibaba Cloud</h2>
         <div>
           <label className="label">API Endpoint</label>
           <input
@@ -96,7 +99,7 @@ export default function Settings() {
             placeholder="cn-hangzhou"
           />
         </div>
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-ink-500/80">
           Saved AK/SK are shown as **** and never returned in plaintext. Leave the mask
           untouched to keep the stored value.
         </p>
@@ -108,7 +111,7 @@ export default function Settings() {
       </form>
 
       <form onSubmit={changePassword} className="card space-y-4 p-5">
-        <h2 className="text-base font-semibold text-gray-900">Change Admin Password</h2>
+        <h2 className="section-title">Change Admin Password</h2>
         <div>
           <label className="label">Current Password</label>
           <input
@@ -130,7 +133,7 @@ export default function Settings() {
             required
           />
         </div>
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-ink-500/80">
           Changing the password invalidates all existing admin sessions.
         </p>
         <div className="text-right">

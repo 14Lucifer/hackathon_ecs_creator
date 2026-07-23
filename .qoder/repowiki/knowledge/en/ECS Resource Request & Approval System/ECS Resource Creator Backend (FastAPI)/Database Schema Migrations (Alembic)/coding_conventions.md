@@ -1,0 +1,3 @@
+- Revision files follow the four-part header block (`Revision ID`, `Revises`, `Create Date`) plus top-level `revision`, `down_revision`, `branch_labels`, `depends_on` variables.
+- Each revision pairs an `upgrade()` that builds tables/enums with a `downgrade()` that reverses them in strict opposite order and cleans up enums via `op.get_bind()`.
+- Migration code uses only `alembic.op` and `sqlalchemy` constructs — no ORM session usage — so changes can be applied both online and offline.

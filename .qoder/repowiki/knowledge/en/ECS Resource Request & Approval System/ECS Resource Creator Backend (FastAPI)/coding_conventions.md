@@ -1,0 +1,4 @@
+- Each domain area owns its own trio of `models/<name>.py`, `schemas/<name>.py`, and `routers/<name>.py` files, with business logic delegated to `services/<name>.py`.
+- Routers depend on models/schemas/services but never import sibling routers; cross-feature communication happens only through service functions.
+- All database sessions are obtained from the shared `app.database` engine/session rather than creating per-request engines.
+- Authentication state is injected via a FastAPI dependency (current-user resolver) instead of manual header parsing inside handlers.

@@ -1,0 +1,3 @@
+- Route handlers declare auth via `dependencies=[Depends(...)]` on the decorator rather than a function parameter, separating authorization from dependency injection.
+- Pydantic input models reuse fields through inheritance (`TemplateUpdate` subclasses `TemplateCreate`) instead of duplicating field definitions.
+- Read responses use a dedicated `*Out` schema with `Config.from_attributes = True` to serialize SQLAlchemy ORM objects back to JSON.

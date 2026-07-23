@@ -1,0 +1,1 @@
+FastAPI with Pydantic v2 `BaseSettings` (pydantic-settings) for env-driven configuration, SQLAlchemy core + declarative base for persistence, psycopg2 as PostgreSQL driver.
