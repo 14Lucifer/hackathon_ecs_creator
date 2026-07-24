@@ -1,4 +1,4 @@
-- Data fetching follows a `load()` callback wrapped in `useCallback` and invoked from a `useEffect(() => load(), [load])` pattern, with errors captured into a local `error` state string displayed via `<ErrorBanner>`.
+- Data fetching follows a `load()` callback wrapped in `useCallback` and invoked from a `useEffect(() => load(), [load])` pattern, with errors captured into a local `error` string displayed via `<ErrorBanner>`.
 - Async mutations wrap their body in try/catch, set a `saving`/`busy` flag before the call, clear it in `finally`, show success via `toast(...)`, and refresh by re-invoking `load()` on completion.
 - Form-driven modals are declared as inner functions of the page, receive `mode`/`user` props, keep form fields in local state, and submit through `api.*` calls rather than direct fetches.
 - Date/time values are formatted through a small local `fmt(ts)` helper returning `new Date(ts).toLocaleString()` / `toLocaleDateString()` instead of using a date library.

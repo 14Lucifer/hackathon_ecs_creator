@@ -4,19 +4,25 @@ import io
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 from openpyxl import Workbook, load_workbook
-from sqlalchemy import select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.middleware.auth import invalidate_user_sessions, require_admin
-from app.models import User, UserRole
+from app.models import AuditLog, RequestStatus, ResourceRequest, User, UserRole
 from app.schemas import BatchUploadResult, UserCreate, UserOut, UserUpdate
+from app.schemas.user import (
+    UserBatchDelete,
+    UserBatchDeleteResult,
+    UserBatchStatus,
+    UserBatchStatusResult,
+)
 from app.services.password import hash_password
 
 router = APIRouter(prefix="/users", tags=["users"], dependencies=[Depends(require_admin)])
 
 
-def _to_out(u: User) -> UserOut:
+def _to_out(u: User, active_resources: int = 0) -> UserOut:
     return UserOut(
         id=u.id,
         email=u.email,
@@ -24,13 +30,26 @@ def _to_out(u: User) -> UserOut:
         role=u.role.value,
         is_active=u.is_active,
         created_at=u.created_at,
+        active_resources=active_resources,
     )
+
+
+# Statuses meaning "a running instance exists on the cloud"
+_RUNNING_STATUSES = [RequestStatus.approved, RequestStatus.delete_pending]
 
 
 @router.get("", response_model=list[UserOut])
 def list_users(db: Session = Depends(get_db)):
     users = db.scalars(select(User).order_by(User.created_at.desc())).all()
-    return [_to_out(u) for u in users]
+    # One grouped query: running-instance count per user
+    counts = dict(
+        db.execute(
+            select(ResourceRequest.user_id, func.count())
+            .where(ResourceRequest.status.in_(_RUNNING_STATUSES))
+            .group_by(ResourceRequest.user_id)
+        ).all()
+    )
+    return [_to_out(u, counts.get(u.id, 0)) for u in users]
 
 
 @router.post("", response_model=UserOut, status_code=201)
@@ -68,6 +87,96 @@ def update_user(user_id: int, payload: UserUpdate, db: Session = Depends(get_db)
     db.commit()
     db.refresh(user)
     return _to_out(user)
+
+
+@router.post("/batch-status", response_model=UserBatchStatusResult)
+def batch_set_status(payload: UserBatchStatus, db: Session = Depends(get_db)):
+    """Enable or disable multiple users at once.
+
+    Disabling is all-or-nothing: if the admin account is part of the selection,
+    the whole batch is rejected.
+    """
+    users = db.scalars(select(User).where(User.id.in_(payload.user_ids))).all()
+    if not payload.is_active and any(u.role == UserRole.admin for u in users):
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "The admin account cannot be disabled. "
+                "Remove it from the selection and try again."
+            ),
+        )
+    for user in users:
+        user.is_active = payload.is_active
+        if not payload.is_active:
+            invalidate_user_sessions(db, user.id)
+    db.commit()
+    return UserBatchStatusResult(
+        updated=len(users), not_found=len(payload.user_ids) - len(users)
+    )
+
+
+_ACTIVE_STATUSES = [RequestStatus.pending, RequestStatus.approved, RequestStatus.delete_pending]
+
+
+def _deletion_blocker(db: Session, user: User) -> str | None:
+    """Return a human-readable reason why this user cannot be deleted, or None."""
+    if user.role == UserRole.admin:
+        return "the admin account cannot be deleted"
+    active = db.scalar(
+        select(ResourceRequest.id)
+        .where(ResourceRequest.user_id == user.id, ResourceRequest.status.in_(_ACTIVE_STATUSES))
+        .limit(1)
+    )
+    if active is not None:
+        return "has active resources or pending requests — remove/resolve them first, or disable the account"
+    return None
+
+
+def _purge_user(db: Session, user: User) -> None:
+    """Hard-delete a user together with their finished request history.
+
+    Removes linked audit-log entries, request rows, and sessions before the
+    account itself (FK order matters).
+    """
+    request_ids = db.scalars(
+        select(ResourceRequest.id).where(ResourceRequest.user_id == user.id)
+    ).all()
+    if request_ids:
+        db.execute(delete(AuditLog).where(AuditLog.request_id.in_(request_ids)))
+        db.execute(delete(ResourceRequest).where(ResourceRequest.id.in_(request_ids)))
+    invalidate_user_sessions(db, user.id)
+    db.delete(user)
+
+
+@router.delete("/{user_id}", status_code=204)
+def delete_user(user_id: int, db: Session = Depends(get_db)):
+    user = db.get(User, user_id)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    blocker = _deletion_blocker(db, user)
+    if blocker:
+        raise HTTPException(status_code=400, detail=f"Cannot delete {user.email}: {blocker}.")
+    _purge_user(db, user)
+    db.commit()
+
+
+@router.post("/batch-delete", response_model=UserBatchDeleteResult)
+def batch_delete_users(payload: UserBatchDelete, db: Session = Depends(get_db)):
+    """Delete multiple users; ineligible ones are skipped and reported."""
+    deleted, skipped = 0, []
+    for user_id in payload.user_ids:
+        user = db.get(User, user_id)
+        if user is None:
+            skipped.append(f"#{user_id}: user not found")
+            continue
+        blocker = _deletion_blocker(db, user)
+        if blocker:
+            skipped.append(f"{user.email}: {blocker}")
+            continue
+        _purge_user(db, user)
+        deleted += 1
+    db.commit()
+    return UserBatchDeleteResult(deleted=deleted, skipped=skipped)
 
 
 @router.get("/batch-template")

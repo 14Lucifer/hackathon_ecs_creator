@@ -12,10 +12,11 @@
 
 ## Update Summary
 **Changes Made**
-- Enhanced filtering capabilities in ActiveResources component with advanced search and filter options
-- Improved resource lifecycle management with better state handling and operational controls
-- Updated dashboard interface with more granular resource status tracking
-- Enhanced real-time monitoring with improved polling mechanisms and error handling
+- Enhanced resource removal capabilities with improved administrative controls and safety mechanisms
+- Added comprehensive resource termination workflows with validation and cleanup procedures
+- Improved administrative interface for managing resource lifecycle operations
+- Enhanced error handling and user feedback for destructive operations
+- Updated API endpoints to support advanced resource management operations
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -25,16 +26,18 @@
 5. [Detailed Component Analysis](#detailed-component-analysis)
 6. [Enhanced Filtering System](#enhanced-filtering-system)
 7. [Resource Lifecycle Management](#resource-lifecycle-management)
-8. [Dependency Analysis](#dependency-analysis)
-9. [Performance Considerations](#performance-considerations)
-10. [Troubleshooting Guide](#troubleshooting-guide)
-11. [Conclusion](#conclusion)
+8. [Resource Removal Capabilities](#resource-removal-capabilities)
+9. [Administrative Controls](#administrative-controls)
+10. [Dependency Analysis](#dependency-analysis)
+11. [Performance Considerations](#performance-considerations)
+12. [Troubleshooting Guide](#troubleshooting-guide)
+13. [Conclusion](#conclusion)
 
 ## Introduction
 
 The Active Resource Monitoring system provides a comprehensive dashboard for real-time tracking and management of cloud computing resources. This interface enables administrators to monitor resource status, manage resource lifecycles, perform health checks, and execute operational controls on running instances. The system integrates with Alibaba Cloud ECS services to provide live resource utilization metrics and administrative capabilities.
 
-**Updated** Enhanced with improved filtering options and advanced resource lifecycle management capabilities for better operational control and monitoring efficiency.
+**Updated** Enhanced with new resource removal capabilities and advanced administrative controls for improved operational efficiency and safety.
 
 ## Project Structure
 
@@ -48,11 +51,15 @@ UI[UI Components]
 API[API Service]
 Filter[Enhanced Filter System]
 Lifecycle[Lifecycle Manager]
+Removal[Resource Removal Handler]
+Admin[Administrative Controls]
 end
 subgraph "Backend Layer"
 Router[Active Resources Router]
 ECS[ECS Service]
 DB[(Database)]
+Auth[Authentication & Authorization]
+Audit[Audit Logging]
 end
 subgraph "Cloud Infrastructure"
 ALI[Alibaba Cloud ECS]
@@ -61,8 +68,12 @@ end
 AR --> API
 AR --> Filter
 AR --> Lifecycle
+AR --> Removal
+AR --> Admin
 API --> Router
 Router --> ECS
+Router --> Auth
+Router --> Audit
 ECS --> ALI
 Router --> DB
 UI --> AR
@@ -90,6 +101,8 @@ The ActiveResources component serves as the primary user interface for monitorin
 - **Health Monitoring Dashboard**: Visual indicators for resource health status
 - **Operational Controls**: Administrative actions on running instances with better error feedback
 - **Resource Allocation Views**: Detailed breakdown of CPU, memory, and storage usage
+- **Resource Removal Interface**: Advanced termination capabilities with validation and confirmation workflows
+- **Administrative Controls**: Enhanced management interface for privileged operations
 
 #### Status Indicators:
 - **Running**: Green indicator showing active resources
@@ -99,7 +112,7 @@ The ActiveResources component serves as the primary user interface for monitorin
 - **Creating**: Blue indicator for resources being provisioned
 - **Deleting**: Orange indicator for resources being terminated
 
-**Updated** Enhanced with additional status indicators and improved state management for better resource lifecycle tracking.
+**Updated** Enhanced with new resource removal interface and improved administrative controls for safer destructive operations.
 
 **Section sources**
 - [ActiveResources.jsx:1-300](file://frontend/src/pages/admin/ActiveResources.jsx#L1-L300)
@@ -113,10 +126,12 @@ The backend router handles API requests for resource monitoring and management o
 - `POST /api/active-resources/{id}/start`: Start a stopped instance with improved validation
 - `POST /api/active-resources/{id}/stop`: Stop a running instance with better error handling
 - `POST /api/active-resources/{id}/restart`: Restart an instance with enhanced state management
-- `DELETE /api/active-resources/{id}`: Terminate an instance with improved cleanup procedures
+- `DELETE /api/active-resources/{id}`: Terminate an instance with improved cleanup procedures and validation
 - `GET /api/active-resources/{id}/metrics`: Get resource utilization metrics with extended data points
+- `POST /api/active-resources/bulk-remove`: Perform bulk resource removal operations with batch processing
+- `GET /api/active-resources/{id}/validation`: Validate resource removal eligibility and dependencies
 
-**Updated** Enhanced API endpoints with improved filtering parameters and better error handling for resource lifecycle operations.
+**Updated** Enhanced API endpoints with new resource removal capabilities and improved validation for administrative operations.
 
 **Section sources**
 - [active_resources.py:1-200](file://backend/app/routers/active_resources.py#L1-L200)
@@ -130,8 +145,10 @@ The ECS service layer manages communication with Alibaba Cloud's Elastic Compute
 - **Status Synchronization**: Real-time status updates from cloud provider with improved reliability
 - **Lifecycle Operations**: Execute start, stop, restart, and termination commands with better error recovery
 - **Metrics Collection**: Gather CPU, memory, disk, and network utilization data with extended metrics
+- **Resource Cleanup**: Automated cleanup of associated resources (disks, snapshots, network interfaces)
+- **Dependency Validation**: Check for dependent resources before removal operations
 
-**Updated** Enhanced cloud service integration with improved error handling and retry mechanisms for better reliability.
+**Updated** Enhanced cloud service integration with improved resource removal capabilities and comprehensive cleanup procedures.
 
 **Section sources**
 - [aliyun_ecs.py:1-250](file://backend/app/services/aliyun_ecs.py#L1-L250)
@@ -144,34 +161,35 @@ The active resource monitoring system follows a layered architecture pattern wit
 sequenceDiagram
 participant User as "Administrator"
 participant UI as "ActiveResources.jsx"
-participant Filter as "Filter System"
+participant Removal as "Removal Handler"
 participant API as "API Service"
 participant Router as "Active Resources Router"
 participant ECS as "ECS Service"
 participant Cloud as "Alibaba Cloud ECS"
-User->>UI : Apply Filters & View Resources
-UI->>Filter : Process Filter Criteria
-Filter->>API : GET /api/active-resources?filters=...
-API->>Router : Process filtered request
-Router->>ECS : ListInstances(filters)
-ECS->>Cloud : DescribeInstances(filterParams)
-Cloud-->>ECS : Filtered Instance Details
-ECS-->>Router : Formatted Resource Data
-Router-->>API : JSON Response
-API-->>UI : Filtered Resource List
-UI->>UI : Render Dashboard
-User->>UI : Click Restart Instance
-UI->>API : POST /api/active-resources/{id}/restart
-API->>Router : Process restart command
-Router->>ECS : RestartInstance(id)
-ECS->>Cloud : Execute restart with validation
+participant Audit as "Audit Logger"
+User->>UI : Select Resource for Removal
+UI->>Removal : Initiate Removal Workflow
+Removal->>API : POST /api/active-resources/{id}/validation
+API->>Router : Process validation request
+Router->>ECS : ValidateRemoval(id)
+ECS->>Cloud : CheckDependencies(id)
+Cloud-->>ECS : Dependency Status
+ECS-->>Router : Validation Result
+Router-->>API : Validation Response
+API-->>UI : Show Removal Confirmation
+User->>UI : Confirm Removal
+UI->>API : DELETE /api/active-resources/{id}
+API->>Router : Process removal request
+Router->>Audit : Log removal operation
+Router->>ECS : RemoveInstance(id)
+ECS->>Cloud : Execute removal with cleanup
 Cloud-->>ECS : Operation result
 ECS-->>Router : Success confirmation
 Router-->>API : Update notification
 API-->>UI : Refresh resource list
 ```
 
-**Updated** Enhanced sequence diagram showing improved filtering workflow and better lifecycle management operations.
+**Updated** Enhanced sequence diagram showing new resource removal workflow with validation, audit logging, and cleanup procedures.
 
 **Diagram sources**
 - [ActiveResources.jsx:50-150](file://frontend/src/pages/admin/ActiveResources.jsx#L50-L150)
@@ -199,6 +217,10 @@ class ActiveResources {
 +Function~renderActionButtons(resource)
 +Function~applyAdvancedFilters(resources)
 +Function~manageResourceLifecycle(resource, action)
++Function~initiateRemovalWorkflow(resource)
++Function~validateRemovalEligibility(resource)
++Function~showRemovalConfirmation(resource)
++Function~executeRemovalOperation(resourceId)
 }
 class Resource {
 +String id
@@ -211,31 +233,23 @@ class Resource {
 +Object metadata
 +String[] tags
 +Object~Lifecycle~ lifecycleState
++Boolean~canBeRemoved~
++String[] dependencies
++Object~RemovalValidation~ validationStatus
 }
-class Filter {
-+String status
-+String region
-+String tag
-+Number minCpuUsage
-+Number maxMemoryUsage
-+String dateRange
-+String owner
-+Boolean showInactive
-}
-class LifecycleManager {
-+Function~startInstance(instanceId)
-+Function~stopInstance(instanceId)
-+Function~restartInstance(instanceId)
-+Function~terminateInstance(instanceId)
-+Function~getLifecycleStatus(instanceId)
-+Function~validateOperation(operation, currentState)
+class RemovalHandler {
++Function~checkDependencies(instanceId)
++Function~validateRemovalConditions(instanceId)
++Function~prepareCleanupTasks(instanceId)
++Function~executeRemovalWithCleanup(instanceId)
++Function~rollbackOnFailure(instanceId, failedTasks)
++Function~logRemovalOperation(instanceId, userId, reason)
 }
 ActiveResources --> Resource : "manages"
-ActiveResources --> Filter : "applies"
-ActiveResources --> LifecycleManager : "controls"
+ActiveResources --> RemovalHandler : "controls"
 ```
 
-**Updated** Enhanced class diagram showing new filtering capabilities and lifecycle management functionality.
+**Updated** Enhanced class diagram showing new removal handler functionality and validation capabilities.
 
 **Diagram sources**
 - [ActiveResources.jsx:1-100](file://frontend/src/pages/admin/ActiveResources.jsx#L1-L100)
@@ -246,7 +260,7 @@ The component implements polling-based updates to maintain current resource stat
 #### Error Handling:
 Comprehensive error handling ensures graceful degradation when cloud services are unavailable or when individual resource operations fail. Users receive clear feedback about operation status and potential issues.
 
-**Updated** Enhanced error handling with better retry logic and improved user feedback for resource lifecycle operations.
+**Updated** Enhanced error handling with improved removal operation feedback and rollback capabilities.
 
 **Section sources**
 - [ActiveResources.jsx:1-400](file://frontend/src/pages/admin/ActiveResources.jsx#L1-L400)
@@ -280,6 +294,7 @@ K --> L["Return 200 OK"]
 - Input validation and sanitization
 - Rate limiting to prevent abuse
 - Audit logging for all resource modifications
+- Removal operation approval workflows for sensitive resources
 
 **Section sources**
 - [active_resources.py:1-250](file://backend/app/routers/active_resources.py#L1-L250)
@@ -300,7 +315,12 @@ class AliyunECSService {
 +Boolean stopInstance(instanceId)
 +Boolean restartInstance(instanceId)
 +Boolean terminateInstance(instanceId)
++Boolean removeInstance(instanceId)
 +Metrics getMetrics(instanceId)
++Dependency[] checkDependencies(instanceId)
++Boolean validateRemovalConditions(instanceId)
++CleanupTask[] prepareCleanupTasks(instanceId)
++Boolean executeCleanupTasks(tasks)
 -Map~String,String~ buildFilters(filters)
 -Instance transformInstance(rawData)
 -Metrics transformMetrics(rawData)
@@ -315,6 +335,8 @@ class Config {
 +Integer retryAttempts
 +Boolean enableRetry
 +Integer retryDelay
++Boolean enableCleanup
++Boolean enableAuditLogging
 }
 class Metrics {
 +Number cpuUtilization
@@ -329,7 +351,7 @@ AliyunECSService --> Config : "uses"
 AliyunECSService --> Metrics : "returns"
 ```
 
-**Updated** Enhanced service architecture with improved configuration options and extended metrics collection.
+**Updated** Enhanced service architecture with new removal capabilities and cleanup task management.
 
 **Diagram sources**
 - [aliyun_ecs.py:1-150](file://backend/app/services/aliyun_ecs.py#L1-L150)
@@ -405,6 +427,76 @@ The service implements retry logic with exponential backoff for transient failur
 - [ActiveResources.jsx:200-400](file://frontend/src/pages/admin/ActiveResources.jsx#L200-L400)
 - [active_resources.py:100-200](file://backend/app/routers/active_resources.py#L100-L200)
 
+## Resource Removal Capabilities
+
+**New Section** The system now includes comprehensive resource removal capabilities with advanced validation, cleanup procedures, and safety mechanisms to ensure safe deletion of cloud resources.
+
+### Removal Workflow:
+- **Pre-Removal Validation**: Check resource dependencies, ownership, and removal eligibility
+- **Dependency Resolution**: Identify and handle dependent resources (disks, snapshots, network interfaces)
+- **Cleanup Task Generation**: Create automated cleanup tasks for associated resources
+- **Confirmation Process**: Multi-step confirmation with detailed impact assessment
+- **Execution Monitoring**: Real-time progress tracking during removal operations
+- **Rollback Support**: Automatic rollback capabilities for failed removal operations
+
+### Safety Mechanisms:
+- **Ownership Verification**: Ensure users have permission to remove specified resources
+- **Dependency Analysis**: Prevent removal of resources with active dependencies
+- **Critical Resource Protection**: Special handling for production or critical resources
+- **Approval Workflows**: Optional approval requirements for sensitive resource removal
+- **Audit Trail**: Complete logging of all removal operations with user attribution
+
+### Cleanup Procedures:
+- **Automated Cleanup**: Automatic deletion of associated disks, snapshots, and network configurations
+- **Selective Cleanup**: Option to preserve specific resources during removal
+- **Backup Creation**: Optional backup creation before destructive operations
+- **Verification**: Post-removal verification to ensure complete cleanup
+- **Notification**: Alert stakeholders when resources are removed
+
+### Administrative Controls:
+- **Bulk Removal**: Remove multiple resources simultaneously with progress tracking
+- **Scheduled Removal**: Queue removal operations for execution during maintenance windows
+- **Force Removal**: Override safety checks for emergency situations (with additional confirmation)
+- **Removal Templates**: Predefined removal workflows for common resource types
+- **Removal Policies**: Configurable policies for automated removal decisions
+
+**Section sources**
+- [ActiveResources.jsx:250-450](file://frontend/src/pages/admin/ActiveResources.jsx#L250-L450)
+- [active_resources.py:150-250](file://backend/app/routers/active_resources.py#L150-L250)
+- [aliyun_ecs.py:200-300](file://backend/app/services/aliyun_ecs.py#L200-L300)
+
+## Administrative Controls
+
+**New Section** Enhanced administrative controls provide powerful tools for managing cloud resources with appropriate safeguards and oversight.
+
+### Access Control:
+- **Role-Based Permissions**: Granular permissions for different administrative roles
+- **Resource Scoping**: Limit administrative actions to specific resource groups or projects
+- **Approval Workflows**: Multi-level approval processes for sensitive operations
+- **Session Management**: Secure session handling with timeout and logout policies
+
+### Monitoring and Auditing:
+- **Activity Logs**: Comprehensive logging of all administrative actions
+- **Real-time Monitoring**: Live dashboard showing ongoing administrative operations
+- **Alerting System**: Notifications for critical administrative events
+- **Compliance Reporting**: Generate reports for regulatory compliance requirements
+
+### Operational Tools:
+- **Batch Operations**: Perform operations on multiple resources simultaneously
+- **Scheduled Tasks**: Queue operations for execution during maintenance windows
+- **Emergency Controls**: Override capabilities for critical situations
+- **Recovery Tools**: Utilities for recovering from failed operations
+
+### Configuration Management:
+- **Policy Configuration**: Define rules for automated resource management
+- **Threshold Settings**: Configure alerts and automated responses for resource conditions
+- **Integration Settings**: Manage connections to external systems and services
+- **Backup and Restore**: Configuration backup and disaster recovery capabilities
+
+**Section sources**
+- [AdminLayout.jsx:1-200](file://frontend/src/pages/admin/AdminLayout.jsx#L1-L200)
+- [active_resources.py:200-300](file://backend/app/routers/active_resources.py#L200-L300)
+
 ## Dependency Analysis
 
 The active resource monitoring system has well-defined dependencies between components:
@@ -418,6 +510,8 @@ Tailwind[Tailwind CSS]
 ChartJS[Chart.js for Metrics]
 DateFns[Date Formatting Library]
 LocalStorage[Browser Storage API]
+RemovalLib[Removal Workflow Library]
+AdminUI[Administrative UI Components]
 end
 subgraph "Backend Dependencies"
 FastAPI[FastAPI Framework]
@@ -426,25 +520,30 @@ PyJWT[PyJWT Authentication]
 AliyunSDK[Alibaba Cloud SDK]
 Celery[Celery for Async Tasks]
 Redis[Redis for Caching]
+AuditLib[Audit Logging Library]
+ValidationLib[Validation Framework]
 end
 subgraph "External Services"
 ECS[Alibaba Cloud ECS]
 VPC[Alibaba Cloud VPC]
 RDS[Alibaba Cloud RDS]
 S3[Alibaba Cloud OSS]
+IAM[IAM Service]
 end
 React --> Axios
 Axios --> FastAPI
 FastAPI --> SQLAlchemy
 FastAPI --> AliyunSDK
 FastAPI --> Celery
+FastAPI --> AuditLib
+FastAPI --> ValidationLib
 Celery --> Redis
 AliyunSDK --> ECS
 AliyunSDK --> VPC
 SQLAlchemy --> RDS
 ```
 
-**Updated** Enhanced dependency graph showing new libraries for filtering, caching, and async task processing.
+**Updated** Enhanced dependency graph showing new libraries for removal workflows, administrative controls, and audit logging.
 
 **Diagram sources**
 - [package.json:1-50](file://frontend/package.json#L1-L50)
@@ -463,6 +562,7 @@ SQLAlchemy --> RDS
 - **Caching Strategy**: Recent resource data cached locally to reduce server load
 - **Filter Optimization**: Client-side filtering for immediate response, server-side for complex queries
 - **Component Memoization**: React.memo and useMemo hooks for expensive computations
+- **Removal Workflow Optimization**: Efficient state management for complex removal operations
 
 ### Backend Optimization
 - **Connection Pooling**: Database connections pooled for efficient query execution
@@ -471,6 +571,7 @@ SQLAlchemy --> RDS
 - **Rate Limiting**: Configurable rate limits per endpoint to prevent abuse
 - **Query Optimization**: Optimized database queries with proper indexing
 - **Caching Layer**: Redis cache for frequently accessed resource data
+- **Batch Processing**: Efficient handling of bulk removal operations
 
 ### Cloud Service Optimization
 - **Batch Operations**: Multiple resource operations batched where possible
@@ -478,6 +579,7 @@ SQLAlchemy --> RDS
 - **Timeout Configuration**: Appropriate timeouts set for cloud API calls
 - **Retry Logic**: Exponential backoff for transient failures
 - **Connection Reuse**: Persistent connections to cloud services
+- **Cleanup Optimization**: Efficient cleanup procedures for resource removal
 
 ### Enhanced Performance Features
 - **Progressive Loading**: Load critical UI elements first, then enhance with additional features
@@ -485,6 +587,7 @@ SQLAlchemy --> RDS
 - **Optimistic Updates**: UI updates immediately, rollback on failure
 - **Resource Deduplication**: Avoid duplicate API calls for same resource data
 - **Intelligent Polling**: Adaptive polling intervals based on resource activity levels
+- **Removal Queue Management**: Efficient queuing system for resource removal operations
 
 ## Troubleshooting Guide
 
@@ -519,6 +622,21 @@ SQLAlchemy --> RDS
 3. Retry operation after brief delay for transient failures
 4. Review cloud provider service status pages
 5. Check resource dependencies and resolve conflicts
+
+#### Resource Removal Failures
+**Symptoms**: Resource removal operations fail or leave orphaned resources
+**Causes**:
+- Unresolved dependencies preventing removal
+- Insufficient permissions for cleanup operations
+- Cloud service API limitations or quotas
+- Network timeouts during cleanup procedures
+
+**Resolution Steps**:
+1. Check dependency analysis results before removal attempts
+2. Verify cleanup permissions and quotas
+3. Retry removal with increased timeout settings
+4. Manually clean up orphaned resources using cloud console
+5. Review audit logs for detailed failure information
 
 #### Performance Issues
 **Symptoms**: Slow dashboard loading or delayed updates
@@ -561,6 +679,8 @@ The system maintains comprehensive logs for debugging and monitoring:
 - **Performance Logs**: Measure operation execution times
 - **Filter Usage Logs**: Track filter patterns and performance
 - **Lifecycle Event Logs**: Monitor resource state transitions
+- **Removal Operation Logs**: Detailed tracking of resource removal activities
+- **Cleanup Task Logs**: Monitor automated cleanup procedure execution
 
 #### Health Check Endpoints
 - `/health`: Basic service health status
@@ -568,8 +688,9 @@ The system maintains comprehensive logs for debugging and monitoring:
 - `/metrics`: Prometheus-compatible metrics for monitoring
 - `/health/filters`: Filter system health and performance metrics
 - `/health/lifecycle`: Resource lifecycle operation status and queue depth
+- `/health/removal`: Resource removal operation status and cleanup queue depth
 
-**Updated** Enhanced monitoring and logging capabilities with filter usage tracking and lifecycle event monitoring.
+**Updated** Enhanced monitoring and logging capabilities with removal operation tracking and cleanup procedure monitoring.
 
 **Section sources**
 - [active_resources.py:200-300](file://backend/app/routers/active_resources.py#L200-L300)
@@ -577,16 +698,17 @@ The system maintains comprehensive logs for debugging and monitoring:
 
 ## Conclusion
 
-The Active Resource Monitoring system provides a robust, scalable solution for managing cloud computing resources through an intuitive web interface. The recent enhancements significantly improve the system's filtering capabilities and resource lifecycle management, making it more efficient and user-friendly for administrators.
+The Active Resource Monitoring system provides a robust, scalable solution for managing cloud computing resources through an intuitive web interface. The recent enhancements significantly improve the system's filtering capabilities, resource lifecycle management, and resource removal capabilities, making it more efficient and user-friendly for administrators.
 
 Key strengths of the enhanced system include:
 - **Advanced Filtering System**: Sophisticated multi-criteria filtering with real-time updates and performance optimization
 - **Enhanced Lifecycle Management**: Comprehensive resource state control with improved validation and error handling
+- **Comprehensive Resource Removal**: Safe and validated resource deletion with automated cleanup and rollback capabilities
+- **Robust Administrative Controls**: Full lifecycle management with safety checks, audit trails, and approval workflows
 - **Real-time Resource Monitoring**: Minimal latency updates with intelligent polling and caching strategies
-- **Robust Administrative Controls**: Full lifecycle management with safety checks and audit trails
 - **Scalable Architecture**: Extensible design supporting future enhancements and additional cloud providers
 - **Performance Optimizations**: Efficient filtering, caching, and background processing for large-scale deployments
 
-The system is designed to scale with growing resource counts and can be extended to support additional cloud providers or enhanced monitoring capabilities as needed. The enhanced filtering and lifecycle management features provide administrators with powerful tools for efficient resource operations and monitoring.
+The system is designed to scale with growing resource counts and can be extended to support additional cloud providers or enhanced monitoring capabilities as needed. The enhanced filtering, lifecycle management, and resource removal features provide administrators with powerful tools for efficient resource operations and monitoring.
 
-**Updated** The recent improvements in filtering capabilities and resource lifecycle management make this system even more valuable for enterprise environments with large numbers of cloud resources requiring sophisticated management capabilities.
+**Updated** The recent improvements in filtering capabilities, resource lifecycle management, and comprehensive resource removal capabilities make this system even more valuable for enterprise environments with large numbers of cloud resources requiring sophisticated management capabilities.

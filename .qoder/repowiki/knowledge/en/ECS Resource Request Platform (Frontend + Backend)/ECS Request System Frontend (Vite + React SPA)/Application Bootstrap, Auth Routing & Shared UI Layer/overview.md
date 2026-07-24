@@ -1,1 +1,0 @@
-Bootstraps the React app, owns the authenticated session and role-based route guards, exposes a cookie-session REST client, and provides shared presentational components plus a process-wide toast system.

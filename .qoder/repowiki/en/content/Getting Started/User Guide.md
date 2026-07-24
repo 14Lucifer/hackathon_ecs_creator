@@ -50,10 +50,16 @@
 - [frontend/src/pages/admin/Approvals.jsx](file://frontend/src/pages/admin/Approvals.jsx)
 - [frontend/src/pages/admin/ActiveResources.jsx](file://frontend/src/pages/admin/ActiveResources.jsx)
 - [frontend/src/pages/admin/AuditLog.jsx](file://frontend/src/pages/admin/AuditLog.jsx)
-- [frontend/src/pages/user/UserPortal.jsx](file://frontend/src/pages/user/UserPortal.jsx)
 - [frontend/src/services/api.js](file://frontend/src/services/api.js)
 - [nginx/nginx.conf](file://nginx/nginx.conf)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Enhanced administrative capabilities for resource removal operations
+- Added DNS management operations functionality
+- Updated Active Resources section with new removal capabilities
+- Expanded DNS service integration documentation
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -182,6 +188,7 @@ DC --> NGINX
   - Services integrate with Alibaba Cloud ECS/VPC/DNS to provision resources upon approval.
 - Admin Features
   - Manage users, templates, settings, active resources, and view audit logs.
+  - **Enhanced**: Administrative capabilities for resource removal and DNS management operations.
 - Data Layer
   - Database connection and models represent core entities such as users, templates, requests, sessions, settings, and audit logs.
   - Alembic manages schema migrations.
@@ -253,12 +260,19 @@ API->>CLOUD : Provision ECS/VPC/DNS (if approved)
 CLOUD-->>API : Provision result
 API->>DB : Update request status
 API-->>FE : Approval result
+Note over FE,API : Enhanced Admin Operations
+FE->>API : DELETE /resources/{id} (remove resource)
+API->>CLOUD : Remove ECS instance and DNS records
+CLOUD-->>API : Removal confirmation
+API->>DB : Update resource status
+API-->>FE : Removal result
 ```
 
 **Diagram sources**
 - [backend/app/routers/auth.py](file://backend/app/routers/auth.py)
 - [backend/app/routers/requests.py](file://backend/app/routers/requests.py)
 - [backend/app/routers/approvals.py](file://backend/app/routers/approvals.py)
+- [backend/app/routers/active_resources.py](file://backend/app/routers/active_resources.py)
 - [backend/app/services/aliyun_ecs.py](file://backend/app/services/aliyun_ecs.py)
 - [backend/app/services/aliyun_vpc.py](file://backend/app/services/aliyun_vpc.py)
 - [backend/app/services/aliyun_dns.py](file://backend/app/services/aliyun_dns.py)
@@ -339,11 +353,54 @@ EndReject --> End(["End"])
 - [backend/app/schemas/request.py](file://backend/app/schemas/request.py)
 - [backend/app/schemas/approval.py](file://backend/app/schemas/approval.py)
 
+### Enhanced Administrative Capabilities
+
+#### Resource Removal Operations
+Administrators can now remove active resources directly from the Active Resources interface. This capability includes:
+- Safe removal of ECS instances with proper cleanup procedures
+- Automatic DNS record deletion when removing resources
+- Audit logging of all removal operations
+- Confirmation dialogs to prevent accidental deletions
+
+#### DNS Management Operations
+The system now provides comprehensive DNS management capabilities:
+- View and manage DNS records associated with resources
+- Add, modify, and delete DNS entries
+- Integration with Alibaba Cloud DNS service
+- Automatic DNS cleanup during resource removal
+
+```mermaid
+flowchart TD
+AdminAccess["Admin Accesses Active Resources"] --> ViewResources["View Active Resources"]
+ViewResources --> SelectResource["Select Resource to Remove"]
+SelectResource --> ConfirmRemoval["Confirm Removal Action"]
+ConfirmRemoval --> RemoveECS["Remove ECS Instance"]
+RemoveECS --> CleanupDNS["Clean Up DNS Records"]
+CleanupDNS --> UpdateAudit["Update Audit Log"]
+UpdateAudit --> NotifyCompletion["Notify Completion"]
+```
+
+**Diagram sources**
+- [backend/app/routers/active_resources.py](file://backend/app/routers/active_resources.py)
+- [backend/app/services/aliyun_ecs.py](file://backend/app/services/aliyun_ecs.py)
+- [backend/app/services/aliyun_dns.py](file://backend/app/services/aliyun_dns.py)
+- [backend/app/models/audit_log.py](file://backend/app/models/audit_log.py)
+
+**Updated** Enhanced administrative capabilities now include resource removal and DNS management operations for better control over cloud infrastructure.
+
+**Section sources**
+- [backend/app/routers/active_resources.py](file://backend/app/routers/active_resources.py)
+- [backend/app/services/aliyun_ecs.py](file://backend/app/services/aliyun_ecs.py)
+- [backend/app/services/aliyun_dns.py](file://backend/app/services/aliyun_dns.py)
+- [backend/app/models/audit_log.py](file://backend/app/models/audit_log.py)
+
 ### Admin Features
 - Users Management: Create, update, and manage user accounts.
 - Templates: Define reusable resource configurations.
 - Settings: Configure system-wide options.
 - Active Resources: View currently provisioned resources.
+- **Enhanced**: Remove active resources with automatic DNS cleanup.
+- **Enhanced**: Manage DNS records independently.
 - Audit Log: Track actions and changes.
 
 References:
@@ -460,6 +517,7 @@ API --> MIGR["Alembic Migrations"]
 - Avoid blocking I/O in request handlers; offload long-running provisioning tasks to background jobs if needed.
 - Ensure database indexes exist on commonly queried fields (e.g., request status, user roles).
 - Tune connection pooling for database and external API clients.
+- **Enhanced**: Implement proper error handling for resource removal operations to prevent partial cleanup failures.
 
 [No sources needed since this section provides general guidance]
 
@@ -474,6 +532,10 @@ Common issues and checks:
 - Cloud service integration
   - Validate API keys and region settings for Alibaba Cloud services.
   - Inspect error responses from ECS/VPC/DNS calls.
+- **Enhanced**: Resource removal issues
+  - Check DNS record cleanup status after resource removal.
+  - Verify audit logs for removal operation details.
+  - Ensure proper permissions for DNS management operations.
 - Frontend connectivity
   - Ensure Nginx proxies correctly to the backend.
   - Check CORS and base URL settings.
@@ -493,7 +555,7 @@ Operational references:
 - [nginx/nginx.conf](file://nginx/nginx.conf)
 
 ## Conclusion
-This guide outlined the system’s architecture, key components, and operational workflows. By following the sections above, users can request resources efficiently, while administrators can manage approvals, users, templates, settings, and audit logs. For deeper technical details, refer to the linked source files.
+This guide outlined the system's architecture, key components, and operational workflows. By following the sections above, users can request resources efficiently, while administrators can manage approvals, users, templates, settings, and audit logs. The enhanced administrative capabilities now provide comprehensive resource removal and DNS management operations for complete infrastructure control. For deeper technical details, refer to the linked source files.
 
 [No sources needed since this section summarizes without analyzing specific files]
 
@@ -505,6 +567,7 @@ This guide outlined the system’s architecture, key components, and operational
 - Build and run services using Docker Compose.
 - Apply database migrations.
 - Access the frontend via Nginx and log in with an admin account.
+- **Enhanced**: Test resource removal and DNS management operations in the admin panel.
 
 References:
 - Orchestration: [docker-compose.yml](file://docker-compose.yml)

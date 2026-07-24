@@ -1,0 +1,1 @@
+Thin wrappers around Alibaba Cloud ECS/VPC SDK v2 for instance lifecycle and resource listing, plus AES-256-GCM encryption for secrets at rest.

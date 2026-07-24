@@ -1,0 +1,1 @@
+FastAPI with SQLAlchemy ORM; Alibaba Cloud SDKs (`aliyun_ecs`, `aliyun_vpc`, `aliyun_dns`) for ECS provisioning and DNS A-record management; passwords encrypted at rest via `app.services.crypto`.

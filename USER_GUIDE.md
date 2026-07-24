@@ -174,11 +174,26 @@ Templates referenced by active requests cannot be deleted.
 
 ### 3.3 Users
 
+- List all users (email, name, role, created date). The **Active Resources**
+  column shows each user's running instances (approved or pending deletion) so
+  you can see who is using how much at a glance.
 - **Create User**: email (must be unique), name, and password.
 - **Edit**: change a user's name and/or password (changing the password logs
   that user out everywhere).
 - **Disable / Enable**: disabled users cannot sign in; the admin account cannot
   be disabled.
+- **Delete**: permanently removes a normal user account. Only allowed when the
+  user has **no active resources or pending requests** — otherwise deletion is
+  refused (remove/resolve their resources first, or disable the account).
+  Deleting purges the user's finished request history and its linked audit-log
+  entries. The admin account supports **Edit only** — it can never be disabled
+  or deleted.
+- **Batch Enable / Disable / Delete**: tick the checkboxes and use the
+  **Enable (n)** / **Disable (n)** / **Delete (n)** toolbar buttons. The admin
+  account's checkbox is greyed out and cannot be selected. Disabling
+  immediately invalidates the selected users' sessions. Batch Delete is
+  **partial**: eligible users are deleted, ineligible ones (active resources,
+  not found) are skipped and reported per user.
 - **Batch Upload (Excel)**:
   1. Click **Download Template** to get an `.xlsx` with columns *Email, Name, Password*.
   2. Fill it in and use **Batch Upload (Excel)**.
@@ -193,6 +208,11 @@ instance name, and an expandable **Credential** cell (click **View**) showing
 the public domain name, domain/IP access strings, and the password behind an
 eye-icon toggle.
 
+**Filters**: the toolbar above the table filters instantly by **User Name**,
+**User Email**, **ECS Template** (dropdown of templates in use) and **Instance
+Name**; a counter shows how many rows match and **Clear** resets everything.
+Select-all and batch actions apply to the filtered rows only.
+
 **Remove**: each row has a **Remove** action that terminates the instance
 (force-stop), deletes its DNS A record, and sets the request status to
 *Removed by Admin* on the user side — no user deletion request needed. The
@@ -200,6 +220,12 @@ modal accepts an **optional remark** that the user sees in their Request
 History (e.g. "Removed during cost cleanup"). Removals are recorded in the
 Audit Log with the **Remove** action, and the freed slot no longer counts
 toward the user's 2-active limit.
+
+**Batch Remove**: tick the checkboxes and click **Batch Remove (n)**. One
+shared optional remark is applied to every selected resource. Resources are
+processed sequentially with **partial success** — the result toast reports how
+many succeeded/failed, and any per-resource errors or DNS-cleanup warnings
+appear in the banner.
 
 ### 3.5 Audit Log
 

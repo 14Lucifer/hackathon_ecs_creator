@@ -58,6 +58,14 @@ export const api = {
   listUsers: () => request('/users'),
   createUser: (data) => request('/users', { method: 'POST', body: data }),
   updateUser: (id, data) => request(`/users/${id}`, { method: 'PUT', body: data }),
+  batchUserStatus: (ids, isActive) =>
+    request('/users/batch-status', {
+      method: 'POST',
+      body: { user_ids: ids, is_active: isActive },
+    }),
+  deleteUser: (id) => request(`/users/${id}`, { method: 'DELETE' }),
+  batchDeleteUsers: (ids) =>
+    request('/users/batch-delete', { method: 'POST', body: { user_ids: ids } }),
   batchUploadUsers: (file) => {
     const form = new FormData()
     form.append('file', file)
@@ -85,6 +93,11 @@ export const api = {
   activeResources: () => request('/active-resources'),
   removeResource: (id, remark) =>
     request(`/active-resources/${id}/remove`, { method: 'POST', body: { remark } }),
+  batchRemoveResources: (ids, remark) =>
+    request('/active-resources/batch-remove', {
+      method: 'POST',
+      body: { request_ids: ids, remark },
+    }),
   auditLogs: (action, order) => {
     const params = new URLSearchParams()
     if (action) params.set('action', action)

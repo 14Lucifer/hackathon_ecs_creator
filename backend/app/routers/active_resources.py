@@ -2,7 +2,7 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -47,6 +47,26 @@ def list_active_resources(db: Session = Depends(get_db)):
 
 class RemoveResourceIn(BaseModel):
     remark: Optional[str] = None  # optional; shown to the user when provided
+
+
+class BatchRemoveIn(BaseModel):
+    request_ids: list[int] = Field(min_length=1)
+    remark: Optional[str] = None  # one shared remark applied to every resource
+
+
+@router.post("/batch-remove", response_model=ApprovalBatchResult)
+def batch_remove_resources(
+    payload: BatchRemoveIn,
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Terminate several approved resources sequentially (partial success allowed)."""
+    try:
+        return approval_service.remove_resources(
+            db, payload.request_ids, payload.remark, admin
+        )
+    except ValueError as exc:  # missing Alibaba Cloud configuration
+        raise HTTPException(status_code=400, detail=str(exc))
 
 
 @router.post("/{request_id}/remove", response_model=ApprovalBatchResult)

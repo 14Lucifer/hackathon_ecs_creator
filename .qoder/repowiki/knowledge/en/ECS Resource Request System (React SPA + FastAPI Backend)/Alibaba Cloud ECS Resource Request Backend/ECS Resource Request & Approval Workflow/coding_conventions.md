@@ -2,3 +2,4 @@
 - Route handlers raise `HTTPException` for client errors (404, 400) while delegating business validation and side effects to the service layer, keeping controllers thin.
 - Admin-scoped routes declare authorization once at the router level via `dependencies=[Depends(require_admin)]` rather than repeating `Depends` on every endpoint.
 - External API calls are wrapped in a try/except that maps missing configuration to 400 and generic provider errors to 502, centralizing error translation at the router boundary.
+- Instance lifecycle rollback uses a best-effort `_rollback_instance` helper that swallows exceptions during cleanup so approval errors remain surfaced to the caller.

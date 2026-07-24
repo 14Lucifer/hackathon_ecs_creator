@@ -1,0 +1,1 @@
+Pydantic v2 models defining the ECS creator backend's request and response contracts for users, templates, requests, approvals, audit logs, and settings.

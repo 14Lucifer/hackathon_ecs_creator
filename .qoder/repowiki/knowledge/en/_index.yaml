@@ -3,11 +3,11 @@ schema_version: 1
 locale: en-US
 branch: main
 nodes_managed: true
-exported_at: "2026-07-23T15:51:07Z"
+exported_at: "2026-07-23T16:20:22Z"
 modules:
     "":
-        dir_name: ECS Resource Request Platform (Frontend + Backend)
-        title: ECS Resource Request Platform (Frontend + Backend)
+        dir_name: ECS Resource Request System (React SPA + FastAPI Backend)
+        title: ECS Resource Request System (React SPA + FastAPI Backend)
         scope:
             - README.md
             - .gitignore
@@ -21,8 +21,8 @@ modules:
         depends_on: []
         related_to: []
     backend:
-        dir_name: ECS Resource Creator Backend (FastAPI)
-        title: ECS Resource Creator Backend (FastAPI)
+        dir_name: Alibaba Cloud ECS Resource Request Backend
+        title: Alibaba Cloud ECS Resource Request Backend
         scope:
             - backend/
         source_files: []
@@ -39,8 +39,8 @@ modules:
         depends_on: []
         related_to: []
     backend/aliyun_services:
-        dir_name: Alibaba Cloud SDK Wrappers & Secret Encryption
-        title: Alibaba Cloud SDK Wrappers & Secret Encryption
+        dir_name: Alibaba Cloud SDK Wrappers & Secrets Encryption
+        title: Alibaba Cloud SDK Wrappers & Secrets Encryption
         scope:
             - backend/app/services/aliyun_ecs.py
             - backend/app/services/aliyun_vpc.py
@@ -82,8 +82,8 @@ modules:
         depends_on: []
         related_to: []
     backend/models:
-        dir_name: SQLAlchemy ORM Domain Models
-        title: SQLAlchemy ORM Domain Models
+        dir_name: ECS Resource-Request ORM Models
+        title: ECS Resource-Request ORM Models
         scope:
             - backend/app/models/
         source_files: []
@@ -91,8 +91,8 @@ modules:
         depends_on: []
         related_to: []
     backend/requests_approvals:
-        dir_name: Resource Request & Approval Workflow
-        title: Resource Request & Approval Workflow
+        dir_name: ECS Resource Request & Approval Workflow
+        title: ECS Resource Request & Approval Workflow
         scope:
             - backend/app/routers/requests.py
             - backend/app/routers/approvals.py
@@ -102,8 +102,8 @@ modules:
         depends_on: []
         related_to: []
     backend/schemas:
-        dir_name: Pydantic Request_Response Schemas
-        title: Pydantic Request/Response Schemas
+        dir_name: Pydantic API Schemas (Request_Response Contracts)
+        title: Pydantic API Schemas (Request/Response Contracts)
         scope:
             - backend/app/schemas/
         source_files: []
@@ -153,8 +153,8 @@ modules:
         depends_on: []
         related_to: []
     frontend/app_shell:
-        dir_name: Application Bootstrap, Auth Routing & Shared UI Layer
-        title: Application Bootstrap, Auth Routing & Shared UI Layer
+        dir_name: App Bootstrap, Auth Context & Shared UI Shell
+        title: App Bootstrap, Auth Context & Shared UI Shell
         scope:
             - frontend/src/App.jsx
             - frontend/src/main.jsx

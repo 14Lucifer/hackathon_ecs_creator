@@ -1,6 +1,8 @@
 """End-to-end API tests covering the core business rules."""
 import pytest
+from fastapi.testclient import TestClient
 
+from app.main import app
 from app.services.approval import _sanitize_name
 from app.services.settings_service import AliyunConfig
 
@@ -317,7 +319,183 @@ def test_rejection_remark_visible_in_history(admin_client, user_client, monkeypa
     assert mine["reject_reason"] == "No budget"
 
 
+def test_batch_remove_resources(admin_client, user_client, monkeypatch):
+    _, deleted, dns = _mock_cloud(monkeypatch)
+    tpl = _create_template(admin_client)
+    ids = [
+        user_client.post("/api/requests", json={"template_id": tpl["id"]}).json()["id"]
+        for _ in range(2)
+    ]
+    _approve(admin_client, ids)
+
+    resp = admin_client.post(
+        "/api/active-resources/batch-remove",
+        json={"request_ids": ids, "remark": "Quarterly cleanup"},
+    )
+    body = resp.json()
+    assert body["succeeded"] == 2 and body["failed"] == 0
+    assert deleted == ["i-test1", "i-test2"]
+    assert dns["deleted"] == ["rec-1", "rec-2"]
+
+    # both requests carry the shared remark and are inactive now
+    mine = user_client.get("/api/requests/mine").json()
+    assert all(
+        r["status"] == "removed_by_admin" and r["reject_reason"] == "Quarterly cleanup"
+        for r in mine
+    )
+    assert admin_client.get("/api/active-resources").json() == []
+
+
+def test_batch_user_status(admin_client):
+    u1 = admin_client.post(
+        "/api/users", json={"email": "b1@example.com", "name": "B One", "password": "pass1234"}
+    ).json()
+    u2 = admin_client.post(
+        "/api/users", json={"email": "b2@example.com", "name": "B Two", "password": "pass1234"}
+    ).json()
+    admin_id = admin_client.get("/api/auth/me").json()["id"]
+
+    # including the admin account rejects the whole disable batch
+    resp = admin_client.post(
+        "/api/users/batch-status",
+        json={"user_ids": [u1["id"], u2["id"], admin_id], "is_active": False},
+    )
+    assert resp.status_code == 400
+    assert "admin account" in resp.json()["detail"]
+    # nothing was changed
+    users = {u["email"]: u for u in admin_client.get("/api/users").json()}
+    assert users["b1@example.com"]["is_active"] is True
+
+    # log b1 in, then batch-disable both users
+    c1 = TestClient(app)
+    assert (
+        c1.post(
+            "/api/auth/login", json={"email": "b1@example.com", "password": "pass1234"}
+        ).status_code
+        == 200
+    )
+    resp = admin_client.post(
+        "/api/users/batch-status",
+        json={"user_ids": [u1["id"], u2["id"], 9999], "is_active": False},
+    )
+    assert resp.json() == {"updated": 2, "not_found": 1}
+    # disabled user's session is invalidated and login is refused
+    assert c1.get("/api/auth/me").status_code == 401
+    assert (
+        c1.post(
+            "/api/auth/login", json={"email": "b1@example.com", "password": "pass1234"}
+        ).status_code
+        == 401
+    )
+
+    # batch enable restores access
+    resp = admin_client.post(
+        "/api/users/batch-status", json={"user_ids": [u1["id"], u2["id"]], "is_active": True}
+    )
+    assert resp.json()["updated"] == 2
+    assert (
+        c1.post(
+            "/api/auth/login", json={"email": "b1@example.com", "password": "pass1234"}
+        ).status_code
+        == 200
+    )
+
+
 # --- Users & settings ---------------------------------------------------------
+
+def _create_user_via_api(admin_client, email, name="Temp User"):
+    resp = admin_client.post(
+        "/api/users", json={"email": email, "name": name, "password": "pass1234"}
+    )
+    assert resp.status_code == 201, resp.text
+    return resp.json()
+
+
+def test_delete_user(admin_client, user_client, monkeypatch):
+    _mock_cloud(monkeypatch)
+    admin_id = admin_client.get("/api/auth/me").json()["id"]
+
+    # the admin account can never be deleted
+    resp = admin_client.delete(f"/api/users/{admin_id}")
+    assert resp.status_code == 400
+    assert "admin account" in resp.json()["detail"]
+
+    # a user without requests can be deleted outright
+    clean = _create_user_via_api(admin_client, "clean@example.com")
+    assert admin_client.delete(f"/api/users/{clean['id']}").status_code == 204
+    emails = [u["email"] for u in admin_client.get("/api/users").json()]
+    assert "clean@example.com" not in emails
+
+    # a user with an ACTIVE resource is blocked
+    tpl = _create_template(admin_client)
+    req = user_client.post("/api/requests", json={"template_id": tpl["id"]}).json()
+    _approve(admin_client, [req["id"]])
+    alice_id = next(
+        u["id"] for u in admin_client.get("/api/users").json() if u["email"] == "user@example.com"
+    )
+    resp = admin_client.delete(f"/api/users/{alice_id}")
+    assert resp.status_code == 400
+    assert "active resources" in resp.json()["detail"]
+
+    # once the resource is removed (finished history), deletion purges history + audit
+    admin_client.post(f"/api/active-resources/{req['id']}/remove", json={"remark": "bye"})
+    assert admin_client.delete(f"/api/users/{alice_id}").status_code == 204
+    emails = [u["email"] for u in admin_client.get("/api/users").json()]
+    assert "user@example.com" not in emails
+    # linked audit entries were purged along with the request history
+    assert admin_client.get("/api/audit").json() == []
+    # the deleted user's session is gone
+    assert user_client.get("/api/auth/me").status_code == 401
+
+
+def test_batch_delete_users(admin_client, user_client, monkeypatch):
+    _mock_cloud(monkeypatch)
+    admin_id = admin_client.get("/api/auth/me").json()["id"]
+    clean = _create_user_via_api(admin_client, "c1@example.com")
+
+    # give Alice an active (pending) request so she is not deletable
+    tpl = _create_template(admin_client)
+    user_client.post("/api/requests", json={"template_id": tpl["id"]})
+    alice_id = next(
+        u["id"] for u in admin_client.get("/api/users").json() if u["email"] == "user@example.com"
+    )
+
+    resp = admin_client.post(
+        "/api/users/batch-delete",
+        json={"user_ids": [clean["id"], alice_id, admin_id, 9999]},
+    )
+    body = resp.json()
+    assert body["deleted"] == 1
+    assert len(body["skipped"]) == 3
+    skipped_text = " ".join(body["skipped"])
+    assert "user@example.com" in skipped_text  # active resources
+    assert "admin account" in skipped_text
+    assert "not found" in skipped_text
+
+
+def test_user_active_resource_count(admin_client, user_client, monkeypatch):
+    _mock_cloud(monkeypatch)
+    tpl = _create_template(admin_client)
+    req = user_client.post("/api/requests", json={"template_id": tpl["id"]}).json()
+
+    def counts():
+        return {u["email"]: u["active_resources"] for u in admin_client.get("/api/users").json()}
+
+    # pending request = no running instance yet
+    assert counts()["user@example.com"] == 0
+
+    _approve(admin_client, [req["id"]])
+    assert counts()["user@example.com"] == 1
+    assert counts()["admin@system.local"] == 0
+
+    # deletion-pending instances still run, so they still count
+    user_client.post(f"/api/requests/{req['id']}/request-deletion")
+    assert counts()["user@example.com"] == 1
+
+    # after the deletion is approved the instance is gone
+    admin_client.post("/api/approvals/deletions/approve", json={"request_ids": [req["id"]]})
+    assert counts()["user@example.com"] == 0
+
 
 def test_user_management(admin_client):
     resp = admin_client.post(

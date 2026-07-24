@@ -1,0 +1,1 @@
+FastAPI routes and service logic for users to submit ECS resource requests and admins to approve/reject them, including cascading network selection, instance provisioning, DNS record management, and deletion workflows.

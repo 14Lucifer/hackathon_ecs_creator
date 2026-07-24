@@ -1,6 +1,6 @@
 schema_version: 1
 module_path: ""
-title: ECS Resource Request Platform (Frontend + Backend)
+title: ECS Resource Request System (React SPA + FastAPI Backend)
 scope:
     - README.md
     - .gitignore

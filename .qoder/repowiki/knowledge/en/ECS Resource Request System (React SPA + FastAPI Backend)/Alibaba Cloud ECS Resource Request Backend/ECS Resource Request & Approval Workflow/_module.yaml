@@ -1,6 +1,6 @@
 schema_version: 1
 module_path: backend/requests_approvals
-title: Resource Request & Approval Workflow
+title: ECS Resource Request & Approval Workflow
 scope:
     - backend/app/routers/requests.py
     - backend/app/routers/approvals.py

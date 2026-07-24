@@ -1,6 +1,6 @@
 schema_version: 1
 module_path: backend/models
-title: SQLAlchemy ORM Domain Models
+title: ECS Resource-Request ORM Models
 scope:
     - backend/app/models/
 source_files: []
