@@ -90,6 +90,7 @@ export const api = {
     request('/approvals/deletions/reject', { method: 'POST', body: { request_ids: ids } }),
 
   // active resources / audit / settings (admin)
+  dashboardMetrics: () => request('/dashboard/metrics'),
   activeResources: () => request('/active-resources'),
   removeResource: (id, remark) =>
     request(`/active-resources/${id}/remove`, { method: 'POST', body: { remark } }),

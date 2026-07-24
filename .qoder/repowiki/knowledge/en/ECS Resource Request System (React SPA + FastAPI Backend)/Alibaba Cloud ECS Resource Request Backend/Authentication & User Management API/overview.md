@@ -1,1 +1,0 @@
-FastAPI endpoints for user login/logout, profile retrieval, and admin-only CRUD plus Excel-based batch upsert of users.

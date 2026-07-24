@@ -1,1 +1,0 @@
-Top-level Docker Compose stack that wires a Vite/React frontend, a FastAPI backend, PostgreSQL, and nginx into the Alibaba Cloud ECS resource request system.

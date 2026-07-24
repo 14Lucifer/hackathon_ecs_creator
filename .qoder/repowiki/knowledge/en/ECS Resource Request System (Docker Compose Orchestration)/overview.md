@@ -1,0 +1,1 @@
+Top-level Docker Compose stack that builds and wires the Vite/React frontend, FastAPI backend, PostgreSQL database, and nginx reverse proxy into a single deployable ECS resource request system.

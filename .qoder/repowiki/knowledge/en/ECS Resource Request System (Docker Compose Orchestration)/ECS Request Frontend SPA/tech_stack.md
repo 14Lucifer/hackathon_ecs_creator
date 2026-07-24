@@ -1,0 +1,1 @@
+React 18 + react-router-dom v6 for SPA routing; Vite as dev server/bundler; Tailwind CSS + PostCSS + Autoprefixer for styling; no external state-management library beyond React Context.

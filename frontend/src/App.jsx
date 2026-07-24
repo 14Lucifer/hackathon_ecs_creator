@@ -5,6 +5,7 @@ import { Spinner } from './components/ui'
 import Login from './pages/Login'
 import UserPortal from './pages/user/UserPortal'
 import AdminLayout from './pages/admin/AdminLayout'
+import Dashboard from './pages/admin/Dashboard'
 import Approvals from './pages/admin/Approvals'
 import Templates from './pages/admin/Templates'
 import Users from './pages/admin/Users'
@@ -54,7 +55,7 @@ export default function App() {
     )
   }
 
-  const home = user ? (user.role === 'admin' ? '/admin/approvals' : '/portal') : '/login'
+  const home = user ? (user.role === 'admin' ? '/admin/dashboard' : '/portal') : '/login'
 
   return (
     <AuthContext.Provider value={{ user, setUser, logout }}>
@@ -68,7 +69,8 @@ export default function App() {
           path="/admin"
           element={user && user.role === 'admin' ? <AdminLayout /> : <Navigate to={home} />}
         >
-          <Route index element={<Navigate to="approvals" />} />
+          <Route index element={<Navigate to="dashboard" />} />
+          <Route path="dashboard" element={<Dashboard />} />
           <Route path="approvals" element={<Approvals />} />
           <Route path="templates" element={<Templates />} />
           <Route path="users" element={<Users />} />

@@ -1,1 +1,0 @@
-Bootstraps the React SPA, owns cookie-session authentication and role-based route guards, exposes a fetch-backed REST client, and provides shared presentational components plus a process-wide toast system.

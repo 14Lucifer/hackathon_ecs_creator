@@ -1,1 +1,0 @@
-Docker Compose with images `nginx:alpine`, `postgres:15-alpine`, and custom-built `./frontend` / `./backend` contexts; the two application containers are decoupled and communicate solely over HTTP via nginx.

@@ -1,1 +1,0 @@
-FastAPI backend that exposes REST endpoints for Alibaba Cloud ECS resource requests, approvals, templates, users, settings and audit logs backed by SQLAlchemy/Alembic.

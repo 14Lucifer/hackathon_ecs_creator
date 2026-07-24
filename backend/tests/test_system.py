@@ -509,6 +509,47 @@ def test_user_management(admin_client):
     assert resp.status_code == 409
 
 
+# --- Dashboard -----------------------------------------------------------------
+
+def test_dashboard_metrics(admin_client, user_client, monkeypatch):
+    _mock_cloud(monkeypatch)
+    tpl = _create_template(admin_client)
+
+    # 2 requests: one approved (creates an instance), one rejected
+    r1 = user_client.post("/api/requests", json={"template_id": tpl["id"]}).json()
+    r2 = user_client.post("/api/requests", json={"template_id": tpl["id"]}).json()
+    _approve(admin_client, [r1["id"]])
+    admin_client.post(
+        "/api/approvals/reject", json={"request_ids": [r2["id"]], "reason": "n/a"}
+    )
+
+    m = admin_client.get("/api/dashboard/metrics").json()
+    assert m["active_instances"] == 1
+    assert m["pending_requests"] == 0
+    assert m["delete_pending_requests"] == 0
+    assert m["total_users"] == 1 and m["active_users"] == 1 and m["disabled_users"] == 0
+    assert m["templates_used"] == 1 and m["max_templates"] == 6
+    assert m["total_requests"] == 2 and m["rejected_requests"] == 1
+    assert m["users_with_active"] == [
+        {"user_name": "Alice", "user_email": "user@example.com", "count": 1}
+    ]
+    # 14 zero-filled days; today's creation count is 1
+    assert len(m["creations_per_day"]) == 14
+    assert sum(d["count"] for d in m["creations_per_day"]) == 1
+    assert m["creations_per_day"][-1]["count"] == 1
+
+    # creation count survives later lifecycle changes (remove the instance)
+    admin_client.post(f"/api/active-resources/{r1['id']}/remove", json={})
+    m = admin_client.get("/api/dashboard/metrics").json()
+    assert m["active_instances"] == 0
+    assert m["removed_requests"] == 1
+    assert m["users_with_active"] == []
+    assert sum(d["count"] for d in m["creations_per_day"]) == 1  # still counted as created
+
+    # admin-only endpoint
+    assert user_client.get("/api/dashboard/metrics").status_code == 403
+
+
 def test_settings_masking(admin_client):
     resp = admin_client.put(
         "/api/settings",

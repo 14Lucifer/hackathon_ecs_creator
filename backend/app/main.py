@@ -12,6 +12,7 @@ from app.routers import (
     approvals,
     audit,
     auth,
+    dashboard,
     requests,
     settings as settings_router,
     templates,
@@ -57,6 +58,7 @@ app.include_router(requests.router, prefix=API_PREFIX)
 app.include_router(approvals.router, prefix=API_PREFIX)
 app.include_router(active_resources.router, prefix=API_PREFIX)
 app.include_router(audit.router, prefix=API_PREFIX)
+app.include_router(dashboard.router, prefix=API_PREFIX)
 app.include_router(settings_router.router, prefix=API_PREFIX)
 
 

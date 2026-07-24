@@ -3,11 +3,11 @@ schema_version: 1
 locale: en-US
 branch: main
 nodes_managed: true
-exported_at: "2026-07-23T16:20:22Z"
+exported_at: "2026-07-24T07:42:02Z"
 modules:
     "":
-        dir_name: ECS Resource Request System (React SPA + FastAPI Backend)
-        title: ECS Resource Request System (React SPA + FastAPI Backend)
+        dir_name: ECS Resource Request System (Docker Compose Orchestration)
+        title: ECS Resource Request System (Docker Compose Orchestration)
         scope:
             - README.md
             - .gitignore
@@ -21,8 +21,8 @@ modules:
         depends_on: []
         related_to: []
     backend:
-        dir_name: Alibaba Cloud ECS Resource Request Backend
-        title: Alibaba Cloud ECS Resource Request Backend
+        dir_name: ECS Resource Request Backend (FastAPI)
+        title: ECS Resource Request Backend (FastAPI)
         scope:
             - backend/
         source_files: []
@@ -50,8 +50,8 @@ modules:
         depends_on: []
         related_to: []
     backend/auth_users:
-        dir_name: Authentication & User Management API
-        title: Authentication & User Management API
+        dir_name: Authentication & Admin User Management API
+        title: Authentication & Admin User Management API
         scope:
             - backend/app/routers/auth.py
             - backend/app/routers/users.py
@@ -102,8 +102,8 @@ modules:
         depends_on: []
         related_to: []
     backend/schemas:
-        dir_name: Pydantic API Schemas (Request_Response Contracts)
-        title: Pydantic API Schemas (Request/Response Contracts)
+        dir_name: Pydantic Request & Response Schemas
+        title: Pydantic Request & Response Schemas
         scope:
             - backend/app/schemas/
         source_files: []
@@ -133,8 +133,8 @@ modules:
         depends_on: []
         related_to: []
     frontend:
-        dir_name: ECS Request System Frontend (Vite + React SPA)
-        title: ECS Request System Frontend (Vite + React SPA)
+        dir_name: ECS Request Frontend SPA
+        title: ECS Request Frontend SPA
         scope:
             - frontend/
         source_files: []
@@ -153,8 +153,8 @@ modules:
         depends_on: []
         related_to: []
     frontend/app_shell:
-        dir_name: App Bootstrap, Auth Context & Shared UI Shell
-        title: App Bootstrap, Auth Context & Shared UI Shell
+        dir_name: Application Bootstrap, Auth Context & Shared UI
+        title: Application Bootstrap, Auth Context & Shared UI
         scope:
             - frontend/src/App.jsx
             - frontend/src/main.jsx

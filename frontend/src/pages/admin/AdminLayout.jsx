@@ -2,6 +2,7 @@ import { NavLink, Outlet } from 'react-router-dom'
 import {
   CheckSquare,
   FileClock,
+  LayoutDashboard,
   LogOut,
   Package,
   Server,
@@ -12,6 +13,7 @@ import {
 import { useAuth } from '../../App'
 
 const NAV = [
+  { to: '/admin/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
   { to: '/admin/approvals', label: 'Approvals', Icon: CheckSquare },
   { to: '/admin/templates', label: 'ECS Templates', Icon: SlidersHorizontal },
   { to: '/admin/users', label: 'Users', Icon: Users },

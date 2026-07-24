@@ -1,6 +1,6 @@
 schema_version: 1
 module_path: frontend
-title: ECS Request System Frontend (Vite + React SPA)
+title: ECS Request Frontend SPA
 scope:
     - frontend/
 source_files: []

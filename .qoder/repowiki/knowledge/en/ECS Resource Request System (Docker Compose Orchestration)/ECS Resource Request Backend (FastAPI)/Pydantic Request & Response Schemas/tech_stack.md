@@ -1,0 +1,1 @@
+Pydantic v2 with `BaseModel`, `EmailStr`, `Field`, and `Literal` types; output models use `class Config: from_attributes = True` for direct SQLAlchemy ORM serialization.

@@ -1,6 +1,6 @@
 schema_version: 1
 module_path: ""
-title: ECS Resource Request System (React SPA + FastAPI Backend)
+title: ECS Resource Request System (Docker Compose Orchestration)
 scope:
     - README.md
     - .gitignore

@@ -20,7 +20,7 @@ export default function Login() {
     try {
       const user = await api.login(email, password)
       setUser(user)
-      navigate(user.role === 'admin' ? '/admin/approvals' : '/portal')
+      navigate(user.role === 'admin' ? '/admin/dashboard' : '/portal')
     } catch (err) {
       setError(err.message)
     } finally {

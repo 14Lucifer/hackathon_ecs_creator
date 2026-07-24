@@ -12,9 +12,18 @@
 - [templates.py](file://backend/app/routers/templates.py)
 - [auth.py](file://backend/app/routers/auth.py)
 - [settings.py](file://backend/app/routers/settings.py)
+- [users.py](file://backend/app/routers/users.py)
+- [active_resources.py](file://backend/app/routers/active_resources.py)
 - [config.py](file://backend/app/config.py)
 - [main.py](file://backend/app/main.py)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Added comprehensive documentation for new batch operation methods including batch user management and batch resource operations
+- Updated error handling strategies to address mixed success/failure outcomes in batch operations
+- Enhanced examples section with batch operation usage patterns
+- Added new sections covering batch operation best practices and performance considerations
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -22,13 +31,14 @@
 3. [Core Components](#core-components)
 4. [Architecture Overview](#architecture-overview)
 5. [Detailed Component Analysis](#detailed-component-analysis)
-6. [Dependency Analysis](#dependency-analysis)
-7. [Performance Considerations](#performance-considerations)
-8. [Troubleshooting Guide](#troubleshooting-guide)
-9. [Conclusion](#conclusion)
+6. [Batch Operations](#batch-operations)
+7. [Dependency Analysis](#dependency-analysis)
+8. [Performance Considerations](#performance-considerations)
+9. [Troubleshooting Guide](#troubleshooting-guide)
+10. [Conclusion](#conclusion)
 
 ## Introduction
-This document describes the API service layer implementation that handles HTTP communication between the frontend and backend. It focuses on client configuration, request/response interceptors, authentication token management, error handling strategies, retry logic, loading state management, security considerations, rate limiting, caching strategies, and debugging techniques. The goal is to provide a comprehensive guide for developers working with or extending the API integration.
+This document describes the API service layer implementation that handles HTTP communication between the frontend and backend. It focuses on client configuration, request/response interceptors, authentication token management, error handling strategies, retry logic, loading state management, security considerations, rate limiting, caching strategies, and debugging techniques. The goal is to provide a comprehensive guide for developers working with or extending the API integration, including the newly enhanced batch operation capabilities.
 
 ## Project Structure
 The project follows a clear separation between frontend and backend:
@@ -52,7 +62,9 @@ subgraph "Backend"
 H["app/main.py"] --> I["app/routers/auth.py"]
 H --> J["app/routers/templates.py"]
 H --> K["app/routers/settings.py"]
-L["app/config.py"] --> H
+H --> L["app/routers/users.py"]
+H --> M["app/routers/active_resources.py"]
+N["app/config.py"] --> H
 end
 C --> G
 D --> G
@@ -73,6 +85,8 @@ G --> H
 - [auth.py](file://backend/app/routers/auth.py)
 - [templates.py](file://backend/app/routers/templates.py)
 - [settings.py](file://backend/app/routers/settings.py)
+- [users.py](file://backend/app/routers/users.py)
+- [active_resources.py](file://backend/app/routers/active_resources.py)
 - [config.py](file://backend/app/config.py)
 
 **Section sources**
@@ -92,12 +106,15 @@ G --> H
 - Rate Limiting: Client-side throttling and server-side guardrails.
 - Caching Strategies: In-memory cache with TTL and invalidation policies.
 - Debugging: Structured logs, request tracing, and test utilities.
+- **Batch Operations**: Dedicated functions for batch user management and batch resource operations with proper error handling for mixed success/failure outcomes.
 
 **Section sources**
 - [api.js](file://frontend/src/services/api.js)
 - [auth.py](file://backend/app/routers/auth.py)
 - [templates.py](file://backend/app/routers/templates.py)
 - [settings.py](file://backend/app/routers/settings.py)
+- [users.py](file://backend/app/routers/users.py)
+- [active_resources.py](file://backend/app/routers/active_resources.py)
 - [config.py](file://backend/app/config.py)
 - [main.py](file://backend/app/main.py)
 
@@ -197,6 +214,8 @@ Recovery:
 - Retry on transient errors (network timeouts, 5xx).
 - Prompt user for input correction on validation errors.
 - Force logout on persistent auth failures.
+
+**Updated** Enhanced error handling now includes specialized processing for batch operations with mixed success/failure outcomes, providing granular feedback for individual item failures while maintaining overall operation status.
 
 **Section sources**
 - [api.js](file://frontend/src/services/api.js)
@@ -312,6 +331,127 @@ Cache-first vs network-first:
 **Section sources**
 - [api.js](file://frontend/src/services/api.js)
 
+## Batch Operations
+
+### Overview
+The API service layer has been extended with comprehensive batch operation capabilities, providing dedicated functions for managing multiple items efficiently. These operations are designed to handle large datasets while maintaining proper error handling and progress tracking.
+
+### Batch User Management
+Dedicated functions for batch user operations include:
+- `batchCreateUsers()`: Create multiple users in a single request
+- `batchUpdateUsers()`: Update multiple user records simultaneously  
+- `batchDeleteUsers()`: Remove multiple users with cascading cleanup
+- `batchEnableDisableUsers()`: Toggle user account status in bulk
+
+### Batch Resource Operations
+Resource-specific batch operations include:
+- `batchCreateResources()`: Provision multiple resources atomically
+- `batchUpdateResources()`: Apply configuration changes to multiple resources
+- `batchDeleteResources()`: Clean up multiple resources with dependency resolution
+- `batchStatusOperations()`: Query or modify status of multiple resources
+
+### Mixed Success/Failure Handling
+The batch operation system provides sophisticated error handling for scenarios where some operations succeed while others fail:
+
+**Response Structure:**
+```javascript
+{
+  success: boolean,
+  totalItems: number,
+  successfulItems: number,
+  failedItems: number,
+  results: Array<{
+    itemId: string,
+    success: boolean,
+    data?: any,
+    error?: {
+      code: string,
+      message: string,
+      details?: any
+    }
+  }>,
+  summary: {
+    processedAt: string,
+    duration: number,
+    warnings: string[]
+  }
+}
+```
+
+**Error Categories:**
+- **Partial Success**: Some items processed successfully, others failed
+- **Complete Failure**: All items failed due to systemic issues
+- **Validation Errors**: Invalid data in one or more items
+- **Permission Errors**: Insufficient permissions for specific items
+- **System Errors**: Backend infrastructure failures
+
+### Implementation Patterns
+
+**Basic Batch Operation:**
+```javascript
+// Batch user creation with progress tracking
+const result = await api.batchCreateUsers(users, {
+  progressCallback: (progress) => {
+    console.log(`${progress.percentage}% complete`);
+  },
+  onError: (error) => {
+    console.error('Batch operation failed:', error);
+  }
+});
+```
+
+**Selective Processing:**
+```javascript
+// Process only successful items
+const successfulUsers = result.results
+  .filter(item => item.success)
+  .map(item => item.data);
+
+// Handle failed items with retry logic
+const failedItems = result.results
+  .filter(item => !item.success)
+  .map(item => ({ id: item.itemId, error: item.error }));
+```
+
+**Progress Monitoring:**
+```javascript
+// Real-time progress updates
+const batchOperation = await api.batchUpdateResources(resources, {
+  onProgress: (status) => {
+    updateProgressBar(status.percentage);
+    displayStatus(status.message);
+  },
+  onComplete: (finalResult) => {
+    showCompletionSummary(finalResult.summary);
+  }
+});
+```
+
+### Best Practices
+
+**Performance Optimization:**
+- Use appropriate batch sizes (typically 10-50 items per batch)
+- Implement chunking for very large datasets
+- Leverage parallel processing where supported
+- Monitor memory usage during large operations
+
+**Error Recovery:**
+- Implement retry logic for transient failures
+- Provide user feedback for partial successes
+- Log detailed error information for debugging
+- Offer rollback capabilities when possible
+
+**User Experience:**
+- Show progress indicators for long-running operations
+- Provide clear success/failure summaries
+- Allow cancellation of in-progress batch operations
+- Display detailed error reports for failed items
+
+**Section sources**
+- [api.js](file://frontend/src/services/api.js)
+- [users.py](file://backend/app/routers/users.py)
+- [active_resources.py](file://backend/app/routers/active_resources.py)
+
 ## Dependency Analysis
 The frontend API client depends on environment configuration and interacts with backend routers. The backend centralizes routing and configuration.
 
@@ -321,9 +461,13 @@ UI["UI Components"] --> API["api.js"]
 API --> AUTH["auth router"]
 API --> TPL["templates router"]
 API --> SET["settings router"]
+API --> USERS["users router"]
+API --> RESOURCES["active_resources router"]
 AUTH --> CFG["config"]
 TPL --> CFG
 SET --> CFG
+USERS --> CFG
+RESOURCES --> CFG
 CFG --> MAIN["main app"]
 ```
 
@@ -332,6 +476,8 @@ CFG --> MAIN["main app"]
 - [auth.py](file://backend/app/routers/auth.py)
 - [templates.py](file://backend/app/routers/templates.py)
 - [settings.py](file://backend/app/routers/settings.py)
+- [users.py](file://backend/app/routers/users.py)
+- [active_resources.py](file://backend/app/routers/active_resources.py)
 - [config.py](file://backend/app/config.py)
 - [main.py](file://backend/app/main.py)
 
@@ -340,6 +486,8 @@ CFG --> MAIN["main app"]
 - [auth.py](file://backend/app/routers/auth.py)
 - [templates.py](file://backend/app/routers/templates.py)
 - [settings.py](file://backend/app/routers/settings.py)
+- [users.py](file://backend/app/routers/users.py)
+- [active_resources.py](file://backend/app/routers/active_resources.py)
 - [config.py](file://backend/app/config.py)
 - [main.py](file://backend/app/main.py)
 
@@ -349,8 +497,7 @@ CFG --> MAIN["main app"]
 - Lazy load routes and features to reduce initial bundle size.
 - Use efficient caching to reduce server load and improve responsiveness.
 - Monitor latency and error rates with structured metrics.
-
-[No sources needed since this section provides general guidance]
+- **Batch Operation Optimization**: Use appropriate batch sizes, implement chunking for large datasets, and leverage parallel processing where supported.
 
 ## Troubleshooting Guide
 Common issues and resolutions:
@@ -360,15 +507,17 @@ Common issues and resolutions:
 - 5xx Server Errors: Retry with exponential backoff; escalate if persistent.
 - CORS errors: Ensure backend allows required origins and headers.
 - Stale cache: Invalidate cache keys after mutations; force refresh when necessary.
+- **Batch Operation Issues**: Check batch size limits, review individual item errors, verify permissions for all target items, and monitor system resources during large operations.
 
 Debug steps:
 - Inspect network tab for request/response details.
 - Enable verbose logging in development.
 - Reproduce with minimal payload to isolate issues.
+- **For Batch Operations**: Review batch operation logs, examine individual item processing results, and check system resource utilization during batch execution.
 
 **Section sources**
 - [api.js](file://frontend/src/services/api.js)
 - [auth.py](file://backend/app/routers/auth.py)
 
 ## Conclusion
-The API service layer provides a robust foundation for reliable, secure, and maintainable HTTP communication. By centralizing configuration, interceptors, authentication, error handling, retries, caching, and loading states, it ensures consistent behavior across the application. Adhering to the security, performance, and debugging recommendations will help deliver a high-quality user experience and simplify future enhancements.
+The API service layer provides a robust foundation for reliable, secure, and maintainable HTTP communication. By centralizing configuration, interceptors, authentication, error handling, retries, caching, and loading states, it ensures consistent behavior across the application. The recent enhancements to batch operation capabilities significantly improve efficiency for managing large datasets while maintaining proper error handling and user feedback. Adhering to the security, performance, and debugging recommendations will help deliver a high-quality user experience and simplify future enhancements.

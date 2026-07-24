@@ -1,0 +1,1 @@
+FastAPI REST backend that lets users request Alibaba Cloud ECS instances and admins approve them, with templated provisioning, DNS/VPC management, audit logging and admin settings.

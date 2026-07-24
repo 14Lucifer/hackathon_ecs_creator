@@ -1,0 +1,1 @@
+Docker Compose with `nginx:alpine`, `postgres:15-alpine`, and custom-built contexts for `./frontend` and `./backend`; shared named volume `frontend_build` carries the SPA artifact from the build container to nginx.

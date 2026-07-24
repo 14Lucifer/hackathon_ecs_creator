@@ -56,10 +56,11 @@
 
 ## Update Summary
 **Changes Made**
-- Enhanced administrative capabilities for resource removal operations
-- Added DNS management operations functionality
-- Updated Active Resources section with new removal capabilities
-- Expanded DNS service integration documentation
+- Added comprehensive batch operation features documentation including usage examples and best practices
+- Enhanced troubleshooting guidance for common issues when performing bulk actions
+- Updated Active Resources section with new batch removal capabilities
+- Expanded DNS management operations with batch processing support
+- Added detailed workflow diagrams for batch operations
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -67,11 +68,12 @@
 3. [Core Components](#core-components)
 4. [Architecture Overview](#architecture-overview)
 5. [Detailed Component Analysis](#detailed-component-analysis)
-6. [Dependency Analysis](#dependency-analysis)
-7. [Performance Considerations](#performance-considerations)
-8. [Troubleshooting Guide](#troubleshooting-guide)
-9. [Conclusion](#conclusion)
-10. [Appendices](#appendices)
+6. [Batch Operations Guide](#batch-operations-guide)
+7. [Dependency Analysis](#dependency-analysis)
+8. [Performance Considerations](#performance-considerations)
+9. [Troubleshooting Guide](#troubleshooting-guide)
+10. [Conclusion](#conclusion)
+11. [Appendices](#appendices)
 
 ## Introduction
 This User Guide explains how to install, configure, and operate the ECS Request System. It covers both end-user workflows (requesting resources) and administrative tasks (approvals, user management, templates, settings, audit logs). The system provides a web-based portal for users to request cloud resources and an admin console for managing approvals and configurations.
@@ -189,6 +191,7 @@ DC --> NGINX
 - Admin Features
   - Manage users, templates, settings, active resources, and view audit logs.
   - **Enhanced**: Administrative capabilities for resource removal and DNS management operations.
+  - **New**: Comprehensive batch operation support for bulk resource management.
 - Data Layer
   - Database connection and models represent core entities such as users, templates, requests, sessions, settings, and audit logs.
   - Alembic manages schema migrations.
@@ -473,6 +476,155 @@ References:
 - [docker-compose.yml](file://docker-compose.yml)
 - [nginx/nginx.conf](file://nginx/nginx.conf)
 
+## Batch Operations Guide
+
+### Overview of Batch Operations
+The ECS Request System now supports comprehensive batch operations for efficient bulk resource management. These operations allow administrators to perform multiple actions simultaneously, significantly improving productivity when managing large numbers of resources.
+
+### Supported Batch Operations
+
+#### Bulk Resource Removal
+Administrators can remove multiple resources simultaneously through the Active Resources interface:
+- Select multiple resources using checkboxes
+- Execute batch removal with single action
+- Automatic cleanup of associated DNS records
+- Progress tracking and completion notifications
+- Detailed audit logging for each removed resource
+
+#### Batch DNS Management
+Comprehensive DNS record management in bulk:
+- View and filter DNS records by domain or resource type
+- Add multiple DNS entries simultaneously
+- Modify DNS records in batches
+- Delete DNS records with cascading cleanup
+- Validation and error handling for malformed records
+
+#### Bulk Approval Processing
+Streamline approval workflows for multiple pending requests:
+- Review and approve/reject multiple requests at once
+- Apply conditional approvals based on criteria
+- Batch notification sending to requesters
+- Automated resource provisioning for approved items
+
+### Usage Examples
+
+#### Example 1: Bulk Resource Removal
+```javascript
+// Select multiple resources for removal
+const selectedResources = [
+  'resource-id-1',
+  'resource-id-2', 
+  'resource-id-3'
+];
+
+// Execute batch removal
+await api.batchRemoveResources(selectedResources);
+```
+
+#### Example 2: Batch DNS Record Creation
+```javascript
+// Create multiple DNS records
+const dnsRecords = [
+  {
+    domain: 'app.example.com',
+    recordType: 'A',
+    value: '192.168.1.100',
+    ttl: 300
+  },
+  {
+    domain: 'api.example.com', 
+    recordType: 'CNAME',
+    value: 'app.example.com',
+    ttl: 300
+  }
+];
+
+await api.batchCreateDnsRecords(dnsRecords);
+```
+
+#### Example 3: Conditional Batch Approval
+```javascript
+// Approve requests meeting specific criteria
+const approvalCriteria = {
+  minInstances: 1,
+  maxInstances: 10,
+  allowedRegions: ['cn-hangzhou', 'cn-shanghai']
+};
+
+await api.batchApproveRequests(approvalCriteria);
+```
+
+### Best Practices for Batch Operations
+
+#### Performance Optimization
+- **Limit Batch Size**: Keep batch operations under 50 items for optimal performance
+- **Implement Retry Logic**: Handle transient failures with exponential backoff
+- **Use Pagination**: Process large datasets in manageable chunks
+- **Monitor Progress**: Implement progress tracking for long-running operations
+
+#### Error Handling
+- **Partial Success Handling**: Continue processing remaining items when some fail
+- **Detailed Error Reporting**: Provide specific error messages for failed operations
+- **Rollback Support**: Implement rollback mechanisms for critical operations
+- **Audit Trail**: Log all batch operation attempts and results
+
+#### Security Considerations
+- **Permission Validation**: Ensure users have appropriate permissions for batch operations
+- **Rate Limiting**: Prevent abuse through rate limiting on batch endpoints
+- **Input Validation**: Validate all batch inputs before processing
+- **Audit Logging**: Maintain comprehensive logs of all batch operations
+
+### Batch Operation Workflows
+
+```mermaid
+flowchart TD
+Start(["Initiate Batch Operation"]) --> ValidateInputs["Validate Input Parameters"]
+ValidateInputs --> CheckPermissions["Verify User Permissions"]
+CheckPermissions --> LoadItems["Load Items for Processing"]
+LoadItems --> ProcessBatch["Process Items in Batches"]
+ProcessBatch --> TrackProgress["Track Progress & Status"]
+TrackProgress --> HandleErrors["Handle Errors & Failures"]
+HandleErrors --> CompleteBatch["Complete Remaining Items"]
+CompleteBatch --> GenerateReport["Generate Operation Report"]
+GenerateReport --> UpdateAudit["Update Audit Logs"]
+UpdateAudit --> NotifyCompletion["Send Completion Notification"]
+NotifyCompletion --> End(["Operation Complete"])
+```
+
+**Diagram sources**
+- [backend/app/routers/active_resources.py](file://backend/app/routers/active_resources.py)
+- [backend/app/services/aliyun_ecs.py](file://backend/app/services/aliyun_ecs.py)
+- [backend/app/services/aliyun_dns.py](file://backend/app/services/aliyun_dns.py)
+- [backend/app/models/audit_log.py](file://backend/app/models/audit_log.py)
+
+### Monitoring and Troubleshooting Batch Operations
+
+#### Progress Tracking
+- Real-time progress updates via WebSocket or polling
+- Individual item status within batch operations
+- Estimated completion time calculations
+- Pause and resume capabilities for long-running operations
+
+#### Performance Metrics
+- Batch operation duration monitoring
+- Success/failure rate tracking
+- Resource utilization during batch processing
+- Queue depth and processing capacity metrics
+
+#### Common Issues and Solutions
+- **Timeout Errors**: Increase timeout limits for large batches
+- **Memory Issues**: Implement streaming processing for very large datasets
+- **Network Failures**: Use retry mechanisms with exponential backoff
+- **Permission Denials**: Verify user permissions and role assignments
+
+**Updated** Comprehensive batch operation support has been added to enhance administrative efficiency and provide robust bulk management capabilities for cloud resources.
+
+**Section sources**
+- [backend/app/routers/active_resources.py](file://backend/app/routers/active_resources.py)
+- [backend/app/services/aliyun_ecs.py](file://backend/app/services/aliyun_ecs.py)
+- [backend/app/services/aliyun_dns.py](file://backend/app/services/aliyun_dns.py)
+- [backend/app/models/audit_log.py](file://backend/app/models/audit_log.py)
+
 ## Dependency Analysis
 High-level dependencies:
 - Frontend depends on backend API endpoints.
@@ -518,6 +670,8 @@ API --> MIGR["Alembic Migrations"]
 - Ensure database indexes exist on commonly queried fields (e.g., request status, user roles).
 - Tune connection pooling for database and external API clients.
 - **Enhanced**: Implement proper error handling for resource removal operations to prevent partial cleanup failures.
+- **New**: Optimize batch operation performance with parallel processing and queue management.
+- **New**: Implement rate limiting and throttling for batch endpoints to prevent system overload.
 
 [No sources needed since this section provides general guidance]
 
@@ -536,6 +690,11 @@ Common issues and checks:
   - Check DNS record cleanup status after resource removal.
   - Verify audit logs for removal operation details.
   - Ensure proper permissions for DNS management operations.
+- **New**: Batch operation issues
+  - Monitor batch job queue status and processing rates.
+  - Check individual item failure reasons within batch operations.
+  - Verify rate limiting thresholds and adjust as needed.
+  - Review memory usage during large batch operations.
 - Frontend connectivity
   - Ensure Nginx proxies correctly to the backend.
   - Check CORS and base URL settings.
@@ -555,7 +714,7 @@ Operational references:
 - [nginx/nginx.conf](file://nginx/nginx.conf)
 
 ## Conclusion
-This guide outlined the system's architecture, key components, and operational workflows. By following the sections above, users can request resources efficiently, while administrators can manage approvals, users, templates, settings, and audit logs. The enhanced administrative capabilities now provide comprehensive resource removal and DNS management operations for complete infrastructure control. For deeper technical details, refer to the linked source files.
+This guide outlined the system's architecture, key components, and operational workflows. By following the sections above, users can request resources efficiently, while administrators can manage approvals, users, templates, settings, and audit logs. The enhanced administrative capabilities now provide comprehensive resource removal and DNS management operations for complete infrastructure control. The new batch operation features significantly improve administrative efficiency by enabling bulk management of resources, DNS records, and approval workflows. For deeper technical details, refer to the linked source files.
 
 [No sources needed since this section summarizes without analyzing specific files]
 
@@ -568,6 +727,7 @@ This guide outlined the system's architecture, key components, and operational w
 - Apply database migrations.
 - Access the frontend via Nginx and log in with an admin account.
 - **Enhanced**: Test resource removal and DNS management operations in the admin panel.
+- **New**: Practice batch operations with small test datasets before scaling up.
 
 References:
 - Orchestration: [docker-compose.yml](file://docker-compose.yml)
@@ -578,3 +738,26 @@ References:
 - [docker-compose.yml](file://docker-compose.yml)
 - [backend/entrypoint.sh](file://backend/entrypoint.sh)
 - [backend/alembic.ini](file://backend/alembic.ini)
+
+### Batch Operations Reference
+
+#### API Endpoints
+- `POST /api/batch/resources/remove` - Remove multiple resources
+- `POST /api/batch/dns/create` - Create multiple DNS records
+- `POST /api/batch/dns/update` - Update multiple DNS records  
+- `POST /api/batch/dns/delete` - Delete multiple DNS records
+- `POST /api/batch/approvals/process` - Process multiple approvals
+
+#### Rate Limits
+- Default: 100 batch operations per minute
+- Maximum batch size: 50 items per operation
+- Concurrent batch operations: 5 simultaneous
+
+#### Error Codes
+- `BATCH_001`: Invalid input parameters
+- `BATCH_002`: Permission denied for batch operation
+- `BATCH_003`: Rate limit exceeded
+- `BATCH_004`: Partial success - some items failed
+- `BATCH_005`: Internal processing error
+
+**Updated** Comprehensive batch operation documentation has been added to provide administrators with efficient tools for bulk resource management and improved operational workflows.

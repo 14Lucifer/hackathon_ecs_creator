@@ -1,6 +1,6 @@
 schema_version: 1
 module_path: frontend/app_shell
-title: App Bootstrap, Auth Context & Shared UI Shell
+title: Application Bootstrap, Auth Context & Shared UI
 scope:
     - frontend/src/App.jsx
     - frontend/src/main.jsx

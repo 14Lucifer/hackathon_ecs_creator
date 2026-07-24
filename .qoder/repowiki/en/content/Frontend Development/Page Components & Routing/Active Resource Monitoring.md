@@ -12,11 +12,11 @@
 
 ## Update Summary
 **Changes Made**
-- Enhanced resource removal capabilities with improved administrative controls and safety mechanisms
-- Added comprehensive resource termination workflows with validation and cleanup procedures
-- Improved administrative interface for managing resource lifecycle operations
-- Enhanced error handling and user feedback for destructive operations
-- Updated API endpoints to support advanced resource management operations
+- Enhanced active resources management with batch operation capabilities for simultaneous operations on multiple ECS instances
+- Added unified endpoints for bulk resource management operations
+- Updated API documentation to reflect new batch processing endpoints
+- Enhanced administrative controls for managing multiple resources simultaneously
+- Improved operational efficiency through consolidated resource management workflows
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -26,7 +26,7 @@
 5. [Detailed Component Analysis](#detailed-component-analysis)
 6. [Enhanced Filtering System](#enhanced-filtering-system)
 7. [Resource Lifecycle Management](#resource-lifecycle-management)
-8. [Resource Removal Capabilities](#resource-removal-capabilities)
+8. [Batch Operation Capabilities](#batch-operation-capabilities)
 9. [Administrative Controls](#administrative-controls)
 10. [Dependency Analysis](#dependency-analysis)
 11. [Performance Considerations](#performance-considerations)
@@ -37,7 +37,7 @@
 
 The Active Resource Monitoring system provides a comprehensive dashboard for real-time tracking and management of cloud computing resources. This interface enables administrators to monitor resource status, manage resource lifecycles, perform health checks, and execute operational controls on running instances. The system integrates with Alibaba Cloud ECS services to provide live resource utilization metrics and administrative capabilities.
 
-**Updated** Enhanced with new resource removal capabilities and advanced administrative controls for improved operational efficiency and safety.
+**Updated** Enhanced with new batch operation capabilities allowing administrators to perform simultaneous operations on multiple ECS instances and related resources through unified endpoints, significantly improving operational efficiency for large-scale resource management.
 
 ## Project Structure
 
@@ -51,7 +51,7 @@ UI[UI Components]
 API[API Service]
 Filter[Enhanced Filter System]
 Lifecycle[Lifecycle Manager]
-Removal[Resource Removal Handler]
+BatchOps[Batch Operations Handler]
 Admin[Administrative Controls]
 end
 subgraph "Backend Layer"
@@ -60,6 +60,7 @@ ECS[ECS Service]
 DB[(Database)]
 Auth[Authentication & Authorization]
 Audit[Audit Logging]
+BatchProcessor[Batch Operation Processor]
 end
 subgraph "Cloud Infrastructure"
 ALI[Alibaba Cloud ECS]
@@ -68,12 +69,13 @@ end
 AR --> API
 AR --> Filter
 AR --> Lifecycle
-AR --> Removal
+AR --> BatchOps
 AR --> Admin
 API --> Router
 Router --> ECS
 Router --> Auth
 Router --> Audit
+Router --> BatchProcessor
 ECS --> ALI
 Router --> DB
 UI --> AR
@@ -101,7 +103,7 @@ The ActiveResources component serves as the primary user interface for monitorin
 - **Health Monitoring Dashboard**: Visual indicators for resource health status
 - **Operational Controls**: Administrative actions on running instances with better error feedback
 - **Resource Allocation Views**: Detailed breakdown of CPU, memory, and storage usage
-- **Resource Removal Interface**: Advanced termination capabilities with validation and confirmation workflows
+- **Batch Operation Interface**: Unified interface for performing simultaneous operations on multiple resources
 - **Administrative Controls**: Enhanced management interface for privileged operations
 
 #### Status Indicators:
@@ -112,7 +114,7 @@ The ActiveResources component serves as the primary user interface for monitorin
 - **Creating**: Blue indicator for resources being provisioned
 - **Deleting**: Orange indicator for resources being terminated
 
-**Updated** Enhanced with new resource removal interface and improved administrative controls for safer destructive operations.
+**Updated** Enhanced with new batch operation interface allowing administrators to select multiple resources and perform simultaneous operations through unified endpoints.
 
 **Section sources**
 - [ActiveResources.jsx:1-300](file://frontend/src/pages/admin/ActiveResources.jsx#L1-L300)
@@ -128,10 +130,13 @@ The backend router handles API requests for resource monitoring and management o
 - `POST /api/active-resources/{id}/restart`: Restart an instance with enhanced state management
 - `DELETE /api/active-resources/{id}`: Terminate an instance with improved cleanup procedures and validation
 - `GET /api/active-resources/{id}/metrics`: Get resource utilization metrics with extended data points
-- `POST /api/active-resources/bulk-remove`: Perform bulk resource removal operations with batch processing
-- `GET /api/active-resources/{id}/validation`: Validate resource removal eligibility and dependencies
+- `POST /api/active-resources/batch-start`: Perform batch start operations on multiple instances
+- `POST /api/active-resources/batch-stop`: Perform batch stop operations on multiple instances
+- `POST /api/active-resources/batch-restart`: Perform batch restart operations on multiple instances
+- `POST /api/active-resources/batch-delete`: Perform batch deletion operations on multiple instances
+- `GET /api/active-resources/batch-status/{operationId}`: Monitor progress of batch operations
 
-**Updated** Enhanced API endpoints with new resource removal capabilities and improved validation for administrative operations.
+**Updated** Enhanced API endpoints with new batch operation capabilities for simultaneous resource management through unified endpoints.
 
 **Section sources**
 - [active_resources.py:1-200](file://backend/app/routers/active_resources.py#L1-L200)
@@ -145,10 +150,11 @@ The ECS service layer manages communication with Alibaba Cloud's Elastic Compute
 - **Status Synchronization**: Real-time status updates from cloud provider with improved reliability
 - **Lifecycle Operations**: Execute start, stop, restart, and termination commands with better error recovery
 - **Metrics Collection**: Gather CPU, memory, disk, and network utilization data with extended metrics
+- **Batch Processing**: Handle multiple resource operations simultaneously with proper queuing and monitoring
 - **Resource Cleanup**: Automated cleanup of associated resources (disks, snapshots, network interfaces)
 - **Dependency Validation**: Check for dependent resources before removal operations
 
-**Updated** Enhanced cloud service integration with improved resource removal capabilities and comprehensive cleanup procedures.
+**Updated** Enhanced cloud service integration with improved batch operation capabilities and efficient handling of multiple concurrent resource operations.
 
 **Section sources**
 - [aliyun_ecs.py:1-250](file://backend/app/services/aliyun_ecs.py#L1-L250)
@@ -161,40 +167,36 @@ The active resource monitoring system follows a layered architecture pattern wit
 sequenceDiagram
 participant User as "Administrator"
 participant UI as "ActiveResources.jsx"
-participant Removal as "Removal Handler"
+participant BatchOps as "Batch Operations Handler"
 participant API as "API Service"
 participant Router as "Active Resources Router"
+participant BatchProc as "Batch Operation Processor"
 participant ECS as "ECS Service"
 participant Cloud as "Alibaba Cloud ECS"
 participant Audit as "Audit Logger"
-User->>UI : Select Resource for Removal
-UI->>Removal : Initiate Removal Workflow
-Removal->>API : POST /api/active-resources/{id}/validation
-API->>Router : Process validation request
-Router->>ECS : ValidateRemoval(id)
-ECS->>Cloud : CheckDependencies(id)
-Cloud-->>ECS : Dependency Status
-ECS-->>Router : Validation Result
-Router-->>API : Validation Response
-API-->>UI : Show Removal Confirmation
-User->>UI : Confirm Removal
-UI->>API : DELETE /api/active-resources/{id}
-API->>Router : Process removal request
-Router->>Audit : Log removal operation
-Router->>ECS : RemoveInstance(id)
-ECS->>Cloud : Execute removal with cleanup
+User->>UI : Select Multiple Resources
+UI->>BatchOps : Initiate Batch Operation
+BatchOps->>API : POST /api/active-resources/batch-{action}
+API->>Router : Process batch request
+Router->>BatchProc : Queue batch operation
+BatchProc->>Audit : Log batch initiation
+loop For Each Resource
+BatchProc->>ECS : Process individual resource
+ECS->>Cloud : Execute cloud operation
 Cloud-->>ECS : Operation result
-ECS-->>Router : Success confirmation
+ECS-->>BatchProc : Result status
+end
+BatchProc-->>Router : Batch completion status
 Router-->>API : Update notification
 API-->>UI : Refresh resource list
 ```
 
-**Updated** Enhanced sequence diagram showing new resource removal workflow with validation, audit logging, and cleanup procedures.
+**Updated** Enhanced sequence diagram showing new batch operation workflow with queue processing, audit logging, and progress tracking.
 
 **Diagram sources**
 - [ActiveResources.jsx:50-150](file://frontend/src/pages/admin/ActiveResources.jsx#L50-L150)
 - [active_resources.py:80-180](file://backend/app/routers/active_resources.py#L80-L180)
-- [aliyun_ecs.py:120-220](file://backend/app/services/aliyun_ecs.py#L120-L220)
+- [aliyun_ecs.py:120-220](file://backend/app/services/aliyun_ecs.py#L120-220)
 
 ## Detailed Component Analysis
 
@@ -221,6 +223,10 @@ class ActiveResources {
 +Function~validateRemovalEligibility(resource)
 +Function~showRemovalConfirmation(resource)
 +Function~executeRemovalOperation(resourceId)
++Function~selectMultipleResources(resourceIds)
++Function~performBatchOperation(action, selectedResources)
++Function~monitorBatchProgress(operationId)
++Function~handleBatchCompletion(operationResult)
 }
 class Resource {
 +String id
@@ -236,20 +242,23 @@ class Resource {
 +Boolean~canBeRemoved~
 +String[] dependencies
 +Object~RemovalValidation~ validationStatus
++Boolean~isSelected~
++Object~BatchStatus~ batchOperationStatus
 }
-class RemovalHandler {
-+Function~checkDependencies(instanceId)
-+Function~validateRemovalConditions(instanceId)
-+Function~prepareCleanupTasks(instanceId)
-+Function~executeRemovalWithCleanup(instanceId)
-+Function~rollbackOnFailure(instanceId, failedTasks)
-+Function~logRemovalOperation(instanceId, userId, reason)
+class BatchOperationsHandler {
++Function~checkBatchEligibility(resources)
++Function~validateBatchConditions(resources)
++Function~prepareBatchTasks(resources, action)
++Function~executeBatchOperation(resources, action)
++Function~monitorBatchProgress(operationId)
++Function~handleBatchFailure(operationId, failedResources)
++Function~logBatchOperation(resources, userId, reason)
 }
 ActiveResources --> Resource : "manages"
-ActiveResources --> RemovalHandler : "controls"
+ActiveResources --> BatchOperationsHandler : "controls"
 ```
 
-**Updated** Enhanced class diagram showing new removal handler functionality and validation capabilities.
+**Updated** Enhanced class diagram showing new batch operations handler functionality and multi-resource selection capabilities.
 
 **Diagram sources**
 - [ActiveResources.jsx:1-100](file://frontend/src/pages/admin/ActiveResources.jsx#L1-L100)
@@ -260,7 +269,7 @@ The component implements polling-based updates to maintain current resource stat
 #### Error Handling:
 Comprehensive error handling ensures graceful degradation when cloud services are unavailable or when individual resource operations fail. Users receive clear feedback about operation status and potential issues.
 
-**Updated** Enhanced error handling with improved removal operation feedback and rollback capabilities.
+**Updated** Enhanced error handling with improved batch operation feedback and individual resource failure isolation within batch processes.
 
 **Section sources**
 - [ActiveResources.jsx:1-400](file://frontend/src/pages/admin/ActiveResources.jsx#L1-L400)
@@ -278,12 +287,20 @@ C --> |No| D["Return 401 Unauthorized"]
 C --> |Yes| E["Request Validation"]
 E --> F{"Valid Request?"}
 F --> |No| G["Return 400 Bad Request"]
-F --> |Yes| H["Execute Business Logic"]
-H --> I{"Operation Success?"}
-I --> |No| J["Handle Error & Return 500"]
-I --> |Yes| K["Format Response"]
-K --> L["Return 200 OK"]
+F --> |Yes| H{"Batch Operation?"}
+H --> |Yes| I["Queue Batch Processing"]
+H --> |No| J["Execute Single Operation"]
+I --> K["Process Individual Resources"]
+J --> L{"Operation Success?"}
+K --> M["Aggregate Results"]
+M --> N["Format Response"]
+L --> |No| O["Handle Error & Return 500"]
+L --> |Yes| P["Format Response"]
+N --> Q["Return 200 OK"]
+P --> Q
 ```
+
+**Updated** Enhanced flow diagram showing new batch operation processing path with queue management and result aggregation.
 
 **Diagram sources**
 - [active_resources.py:50-150](file://backend/app/routers/active_resources.py#L50-L150)
@@ -295,6 +312,7 @@ K --> L["Return 200 OK"]
 - Rate limiting to prevent abuse
 - Audit logging for all resource modifications
 - Removal operation approval workflows for sensitive resources
+- Batch operation validation and resource eligibility checking
 
 **Section sources**
 - [active_resources.py:1-250](file://backend/app/routers/active_resources.py#L1-L250)
@@ -321,11 +339,15 @@ class AliyunECSService {
 +Boolean validateRemovalConditions(instanceId)
 +CleanupTask[] prepareCleanupTasks(instanceId)
 +Boolean executeCleanupTasks(tasks)
++BatchResult[] processBatchOperations(resources, action)
++Boolean validateBatchEligibility(resources)
++BatchStatus monitorBatchProgress(operationId)
 -Map~String,String~ buildFilters(filters)
 -Instance transformInstance(rawData)
 -Metrics transformMetrics(rawData)
 -Boolean validateInstanceState(instanceId, expectedState)
 -Boolean checkResourceAvailability(instanceId)
+-BatchResult aggregateBatchResults(results)
 }
 class Config {
 +String accessKeyId
@@ -337,6 +359,8 @@ class Config {
 +Integer retryDelay
 +Boolean enableCleanup
 +Boolean enableAuditLogging
++Integer maxBatchSize
++Boolean enableBatchProcessing
 }
 class Metrics {
 +Number cpuUtilization
@@ -351,7 +375,7 @@ AliyunECSService --> Config : "uses"
 AliyunECSService --> Metrics : "returns"
 ```
 
-**Updated** Enhanced service architecture with new removal capabilities and cleanup task management.
+**Updated** Enhanced service architecture with new batch processing capabilities and batch result aggregation functionality.
 
 **Diagram sources**
 - [aliyun_ecs.py:1-150](file://backend/app/services/aliyun_ecs.py#L1-L150)
@@ -427,43 +451,53 @@ The service implements retry logic with exponential backoff for transient failur
 - [ActiveResources.jsx:200-400](file://frontend/src/pages/admin/ActiveResources.jsx#L200-L400)
 - [active_resources.py:100-200](file://backend/app/routers/active_resources.py#L100-L200)
 
-## Resource Removal Capabilities
+## Batch Operation Capabilities
 
-**New Section** The system now includes comprehensive resource removal capabilities with advanced validation, cleanup procedures, and safety mechanisms to ensure safe deletion of cloud resources.
+**New Section** The system now includes comprehensive batch operation capabilities allowing administrators to perform simultaneous operations on multiple ECS instances and related resources through unified endpoints.
 
-### Removal Workflow:
-- **Pre-Removal Validation**: Check resource dependencies, ownership, and removal eligibility
-- **Dependency Resolution**: Identify and handle dependent resources (disks, snapshots, network interfaces)
-- **Cleanup Task Generation**: Create automated cleanup tasks for associated resources
-- **Confirmation Process**: Multi-step confirmation with detailed impact assessment
-- **Execution Monitoring**: Real-time progress tracking during removal operations
-- **Rollback Support**: Automatic rollback capabilities for failed removal operations
+### Batch Operation Types:
+- **Batch Start**: Start multiple stopped instances simultaneously
+- **Batch Stop**: Gracefully stop multiple running instances concurrently
+- **Batch Restart**: Restart multiple instances with coordinated timing
+- **Batch Delete**: Remove multiple instances with automated cleanup
+- **Batch Snapshot**: Create snapshots of multiple instances for backup purposes
+- **Batch Tag Update**: Apply tag changes across multiple resources
 
-### Safety Mechanisms:
-- **Ownership Verification**: Ensure users have permission to remove specified resources
-- **Dependency Analysis**: Prevent removal of resources with active dependencies
-- **Critical Resource Protection**: Special handling for production or critical resources
-- **Approval Workflows**: Optional approval requirements for sensitive resource removal
-- **Audit Trail**: Complete logging of all removal operations with user attribution
+### Batch Processing Workflow:
+- **Resource Selection**: Multi-select interface for choosing target resources
+- **Eligibility Validation**: Pre-check all selected resources for operation compatibility
+- **Batch Queuing**: Queue batch operations for sequential or parallel processing
+- **Progress Monitoring**: Real-time progress tracking for each resource in the batch
+- **Result Aggregation**: Consolidated results showing success/failure for each resource
+- **Error Isolation**: Individual resource failures don't affect other resources in the batch
 
-### Cleanup Procedures:
-- **Automated Cleanup**: Automatic deletion of associated disks, snapshots, and network configurations
-- **Selective Cleanup**: Option to preserve specific resources during removal
-- **Backup Creation**: Optional backup creation before destructive operations
-- **Verification**: Post-removal verification to ensure complete cleanup
-- **Notification**: Alert stakeholders when resources are removed
+### Batch Operation Endpoints:
+- `POST /api/active-resources/batch-start`: Start multiple instances with validation
+- `POST /api/active-resources/batch-stop`: Stop multiple instances with graceful shutdown
+- `POST /api/active-resources/batch-restart`: Restart multiple instances with coordination
+- `POST /api/active-resources/batch-delete`: Delete multiple instances with cleanup
+- `GET /api/active-resources/batch-status/{operationId}`: Monitor batch operation progress
+- `POST /api/active-resources/batch-validate`: Validate batch operation eligibility
+
+### Batch Processing Features:
+- **Parallel Execution**: Concurrent processing of independent resource operations
+- **Rate Limiting**: Configurable limits to prevent overwhelming cloud provider APIs
+- **Timeout Management**: Individual timeouts per resource with overall batch timeout
+- **Retry Logic**: Automatic retry for transient failures with exponential backoff
+- **Partial Success Handling**: Continue processing even if some resources fail
+- **Audit Trail**: Complete logging of all batch operations with detailed results
 
 ### Administrative Controls:
-- **Bulk Removal**: Remove multiple resources simultaneously with progress tracking
-- **Scheduled Removal**: Queue removal operations for execution during maintenance windows
-- **Force Removal**: Override safety checks for emergency situations (with additional confirmation)
-- **Removal Templates**: Predefined removal workflows for common resource types
-- **Removal Policies**: Configurable policies for automated removal decisions
+- **Batch Size Limits**: Configurable maximum number of resources per batch operation
+- **Priority Queuing**: Priority levels for different types of batch operations
+- **Scheduling Options**: Schedule batch operations for future execution
+- **Approval Workflows**: Optional approval requirements for sensitive batch operations
+- **Monitoring Dashboard**: Real-time view of ongoing batch operations and their status
 
 **Section sources**
 - [ActiveResources.jsx:250-450](file://frontend/src/pages/admin/ActiveResources.jsx#L250-L450)
-- [active_resources.py:150-250](file://backend/app/routers/active_resources.py#L150-L250)
-- [aliyun_ecs.py:200-300](file://backend/app/services/aliyun_ecs.py#L200-L300)
+- [active_resources.py:150-250](file://backend/app/routers/active_resources.py#L150-250)
+- [aliyun_ecs.py:200-300](file://backend/app/services/aliyun_ecs.py#L200-300)
 
 ## Administrative Controls
 
@@ -510,7 +544,7 @@ Tailwind[Tailwind CSS]
 ChartJS[Chart.js for Metrics]
 DateFns[Date Formatting Library]
 LocalStorage[Browser Storage API]
-RemovalLib[Removal Workflow Library]
+BatchLib[Batch Operations Library]
 AdminUI[Administrative UI Components]
 end
 subgraph "Backend Dependencies"
@@ -522,6 +556,7 @@ Celery[Celery for Async Tasks]
 Redis[Redis for Caching]
 AuditLib[Audit Logging Library]
 ValidationLib[Validation Framework]
+BatchProcessor[Batch Processing Engine]
 end
 subgraph "External Services"
 ECS[Alibaba Cloud ECS]
@@ -537,13 +572,14 @@ FastAPI --> AliyunSDK
 FastAPI --> Celery
 FastAPI --> AuditLib
 FastAPI --> ValidationLib
+FastAPI --> BatchProcessor
 Celery --> Redis
 AliyunSDK --> ECS
 AliyunSDK --> VPC
 SQLAlchemy --> RDS
 ```
 
-**Updated** Enhanced dependency graph showing new libraries for removal workflows, administrative controls, and audit logging.
+**Updated** Enhanced dependency graph showing new libraries for batch operations processing and administrative controls.
 
 **Diagram sources**
 - [package.json:1-50](file://frontend/package.json#L1-L50)
@@ -562,7 +598,7 @@ SQLAlchemy --> RDS
 - **Caching Strategy**: Recent resource data cached locally to reduce server load
 - **Filter Optimization**: Client-side filtering for immediate response, server-side for complex queries
 - **Component Memoization**: React.memo and useMemo hooks for expensive computations
-- **Removal Workflow Optimization**: Efficient state management for complex removal operations
+- **Batch Operation Optimization**: Efficient state management for complex batch operations
 
 ### Backend Optimization
 - **Connection Pooling**: Database connections pooled for efficient query execution
@@ -571,7 +607,7 @@ SQLAlchemy --> RDS
 - **Rate Limiting**: Configurable rate limits per endpoint to prevent abuse
 - **Query Optimization**: Optimized database queries with proper indexing
 - **Caching Layer**: Redis cache for frequently accessed resource data
-- **Batch Processing**: Efficient handling of bulk removal operations
+- **Batch Processing**: Efficient handling of bulk operations with parallel processing
 
 ### Cloud Service Optimization
 - **Batch Operations**: Multiple resource operations batched where possible
@@ -587,7 +623,8 @@ SQLAlchemy --> RDS
 - **Optimistic Updates**: UI updates immediately, rollback on failure
 - **Resource Deduplication**: Avoid duplicate API calls for same resource data
 - **Intelligent Polling**: Adaptive polling intervals based on resource activity levels
-- **Removal Queue Management**: Efficient queuing system for resource removal operations
+- **Batch Queue Management**: Efficient queuing system for batch resource operations
+- **Concurrent Processing**: Parallel execution of independent batch operations
 
 ## Troubleshooting Guide
 
@@ -623,20 +660,20 @@ SQLAlchemy --> RDS
 4. Review cloud provider service status pages
 5. Check resource dependencies and resolve conflicts
 
-#### Resource Removal Failures
-**Symptoms**: Resource removal operations fail or leave orphaned resources
+#### Batch Operation Failures
+**Symptoms**: Batch operations fail partially or completely
 **Causes**:
-- Unresolved dependencies preventing removal
-- Insufficient permissions for cleanup operations
-- Cloud service API limitations or quotas
-- Network timeouts during cleanup procedures
+- Mixed resource states causing operation conflicts
+- Rate limiting from cloud provider APIs
+- Insufficient permissions for some resources in batch
+- Network timeouts during batch processing
 
 **Resolution Steps**:
-1. Check dependency analysis results before removal attempts
-2. Verify cleanup permissions and quotas
-3. Retry removal with increased timeout settings
-4. Manually clean up orphaned resources using cloud console
-5. Review audit logs for detailed failure information
+1. Check batch operation logs for individual resource failures
+2. Verify all selected resources have compatible states
+3. Reduce batch size if hitting rate limits
+4. Retry failed operations individually
+5. Check cloud provider quotas and limits
 
 #### Performance Issues
 **Symptoms**: Slow dashboard loading or delayed updates
@@ -654,21 +691,6 @@ SQLAlchemy --> RDS
 5. Use client-side filtering for simple criteria
 6. Reduce number of simultaneous operations
 
-#### Enhanced Filtering Issues
-**Symptoms**: Filters not working correctly or slow performance
-**Causes**:
-- Complex filter combinations causing slow queries
-- Missing index on filtered columns
-- Browser storage limitations for filter persistence
-- Memory leaks in filter state management
-
-**Resolution Steps**:
-1. Simplify complex filter combinations
-2. Add database indexes for frequently filtered fields
-3. Clear browser storage if corrupted
-4. Monitor memory usage and implement garbage collection
-5. Use debouncing for rapid filter changes
-
 ### Monitoring and Logging
 
 #### Application Logs
@@ -679,8 +701,8 @@ The system maintains comprehensive logs for debugging and monitoring:
 - **Performance Logs**: Measure operation execution times
 - **Filter Usage Logs**: Track filter patterns and performance
 - **Lifecycle Event Logs**: Monitor resource state transitions
-- **Removal Operation Logs**: Detailed tracking of resource removal activities
-- **Cleanup Task Logs**: Monitor automated cleanup procedure execution
+- **Batch Operation Logs**: Detailed tracking of batch processing activities
+- **Individual Resource Logs**: Per-resource operation status within batches
 
 #### Health Check Endpoints
 - `/health`: Basic service health status
@@ -688,9 +710,9 @@ The system maintains comprehensive logs for debugging and monitoring:
 - `/metrics`: Prometheus-compatible metrics for monitoring
 - `/health/filters`: Filter system health and performance metrics
 - `/health/lifecycle`: Resource lifecycle operation status and queue depth
-- `/health/removal`: Resource removal operation status and cleanup queue depth
+- `/health/batch`: Batch operation processing status and queue depth
 
-**Updated** Enhanced monitoring and logging capabilities with removal operation tracking and cleanup procedure monitoring.
+**Updated** Enhanced monitoring and logging capabilities with batch operation tracking and individual resource status within batch processes.
 
 **Section sources**
 - [active_resources.py:200-300](file://backend/app/routers/active_resources.py#L200-L300)
@@ -698,17 +720,17 @@ The system maintains comprehensive logs for debugging and monitoring:
 
 ## Conclusion
 
-The Active Resource Monitoring system provides a robust, scalable solution for managing cloud computing resources through an intuitive web interface. The recent enhancements significantly improve the system's filtering capabilities, resource lifecycle management, and resource removal capabilities, making it more efficient and user-friendly for administrators.
+The Active Resource Monitoring system provides a robust, scalable solution for managing cloud computing resources through an intuitive web interface. The recent enhancements significantly improve the system's batch operation capabilities, making it more efficient and user-friendly for administrators managing large-scale cloud environments.
 
 Key strengths of the enhanced system include:
-- **Advanced Filtering System**: Sophisticated multi-criteria filtering with real-time updates and performance optimization
-- **Enhanced Lifecycle Management**: Comprehensive resource state control with improved validation and error handling
-- **Comprehensive Resource Removal**: Safe and validated resource deletion with automated cleanup and rollback capabilities
+- **Batch Operation Capabilities**: Unified endpoints for simultaneous operations on multiple ECS instances and related resources
+- **Enhanced Filtering System**: Sophisticated multi-criteria filtering with real-time updates and performance optimization
+- **Improved Lifecycle Management**: Comprehensive resource state control with improved validation and error handling
 - **Robust Administrative Controls**: Full lifecycle management with safety checks, audit trails, and approval workflows
 - **Real-time Resource Monitoring**: Minimal latency updates with intelligent polling and caching strategies
 - **Scalable Architecture**: Extensible design supporting future enhancements and additional cloud providers
 - **Performance Optimizations**: Efficient filtering, caching, and background processing for large-scale deployments
 
-The system is designed to scale with growing resource counts and can be extended to support additional cloud providers or enhanced monitoring capabilities as needed. The enhanced filtering, lifecycle management, and resource removal features provide administrators with powerful tools for efficient resource operations and monitoring.
+The system is designed to scale with growing resource counts and can be extended to support additional cloud providers or enhanced monitoring capabilities as needed. The new batch operation features provide administrators with powerful tools for efficient resource management at scale, significantly reducing operational overhead while maintaining safety and auditability.
 
-**Updated** The recent improvements in filtering capabilities, resource lifecycle management, and comprehensive resource removal capabilities make this system even more valuable for enterprise environments with large numbers of cloud resources requiring sophisticated management capabilities.
+**Updated** The recent improvements in batch operation capabilities make this system even more valuable for enterprise environments with large numbers of cloud resources requiring efficient bulk management capabilities.

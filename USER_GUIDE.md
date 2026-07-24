@@ -91,12 +91,27 @@ its status, an **Active / Inactive** tag, and a **Remark** column:
 
 ## 3. Admin Portal
 
-The admin portal uses a left sidebar with six sections.
+The admin portal uses a left sidebar with seven sections.
 
-### 3.1 Approvals
+### 3.1 Dashboard
 
-The landing page shows two queues plus summary cards (pending count, deletion
-requests, current selection).
+The landing page after admin login — live metrics from the database:
+
+- **Stat cards**: active instances (approved or pending deletion), pending
+  approvals, deletion requests, users (total / active / disabled), templates
+  in use, lifetime totals (requests, rejected, removed by admin).
+- **Users with Active Instances**: who currently owns how many running
+  instances, sorted by count.
+- **Instance Creations — Last 14 Days**: daily bar chart of successful
+  instance creations (based on first approval time; instances deleted later
+  still count for the day they were created).
+- **Refresh** button (top right) re-fetches everything; a "Last updated"
+  timestamp shows the data's age.
+
+### 3.2 Approvals
+
+Shows two queues plus summary cards (pending count, deletion requests,
+current selection).
 
 **Approving resource requests**
 
@@ -149,7 +164,7 @@ The lower table lists resources whose owners asked for deletion:
 All Alibaba Cloud calls show a *"Calling Alibaba Cloud API..."* spinner; API
 failures appear in a dismissible red error banner.
 
-### 3.2 ECS Templates
+### 3.3 ECS Templates
 
 Templates define what users can request. **Maximum 6 templates** — at the limit
 the *Create Template* button is disabled with a tooltip.
@@ -172,7 +187,7 @@ per-template** — it comes from Settings.
 
 Templates referenced by active requests cannot be deleted.
 
-### 3.3 Users
+### 3.4 Users
 
 - List all users (email, name, role, created date). The **Active Resources**
   column shows each user's running instances (approved or pending deletion) so
@@ -201,7 +216,7 @@ Templates referenced by active requests cannot be deleted.
      **overwritten**; **new** emails are **appended** as new users.
   4. Rows with missing fields are reported as errors and skipped.
 
-### 3.4 Active Resources
+### 3.5 Active Resources
 
 A live overview of every *approved* (running) instance: owner, template,
 instance name, and an expandable **Credential** cell (click **View**) showing
@@ -227,13 +242,13 @@ processed sequentially with **partial success** — the result toast reports how
 many succeeded/failed, and any per-resource errors or DNS-cleanup warnings
 appear in the banner.
 
-### 3.5 Audit Log
+### 3.6 Audit Log
 
 A read-only record of every approve/reject/remove action: timestamp, action,
 affected user, template, acting admin, and remark (rejection reason or removal
 remark, if any). Sortable by timestamp and filterable by action type.
 
-### 3.6 Settings
+### 3.7 Settings
 
 | Field | Notes |
 |-------|-------|

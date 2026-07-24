@@ -1,0 +1,1 @@
+FastAPI endpoints for cookie-based login/logout/me and admin-only user CRUD plus Excel-driven batch upsert, backed by SQLAlchemy and password hashing.

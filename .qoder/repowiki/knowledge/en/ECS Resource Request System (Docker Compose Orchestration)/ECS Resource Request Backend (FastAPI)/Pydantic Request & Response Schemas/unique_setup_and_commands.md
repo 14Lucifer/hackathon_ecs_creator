@@ -1,0 +1,1 @@
+No build or setup steps required — pure Python package consumed by importing `from app.schemas import ...` after the FastAPI application is installed.

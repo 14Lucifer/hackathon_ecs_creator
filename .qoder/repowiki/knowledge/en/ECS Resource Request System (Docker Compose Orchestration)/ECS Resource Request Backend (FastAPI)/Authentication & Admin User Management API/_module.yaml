@@ -1,6 +1,6 @@
 schema_version: 1
 module_path: backend/auth_users
-title: Authentication & User Management API
+title: Authentication & Admin User Management API
 scope:
     - backend/app/routers/auth.py
     - backend/app/routers/users.py
